@@ -1,0 +1,32 @@
+---
+title: "evanji"
+author: "Evan Jiang"
+date: "2/15/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+hotel_bookings = read.csv("hotel_bookings.csv")
+hotel_bookings$is_canceled = as.factor(hotel_bookings$is_canceled)
+hotel_bookings$is_repeated_guest = as.factor(hotel_bookings$is_repeated_guest)
+hotel_bookings$company = as.factor(hotel_bookings$company)
+hotel_bookings$hotel = as.factor(hotel_bookings$hotel)
+hotel_bookings$arrival_date_month = as.factor(hotel_bookings$arrival_date_month)
+hotel_bookings$arrival_date_year = as.factor(hotel_bookings$arrival_date_year)
+hotel_bookings$meal = as.factor(hotel_bookings$meal)
+hotel_bookings$country = as.factor(hotel_bookings$country)
+hotel_bookings$market_segment = as.factor(hotel_bookings$market_segment)
+hotel_bookings$distribution_channel = as.factor(hotel_bookings$distribution_channel)
+hotel_bookings$reserved_room_type = as.factor(hotel_bookings$reserved_room_type)
+hotel_bookings$assigned_room_type = as.factor(hotel_bookings$assigned_room_type)
+hotel_bookings$agent = as.factor(hotel_bookings$agent)
+hotel_bookings$reservation_status_date = as.factor(hotel_bookings$reservation_status_date)
+hotel_bookings$reservation_status = as.factor(hotel_bookings$reservation_status)
+hotel_bookings$customer_type = as.factor(hotel_bookings$customer_type)
+hotel_bookings$deposit_type = as.factor(hotel_bookings$deposit_type)
+```
+
