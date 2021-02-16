@@ -6,6 +6,24 @@ output: html_document
 ---
 
 ```{r}
-1+1
+library(ggplot2)
+library(dplyr)
+```
+
+```{r}
+hotelbookings <- read.csv("hotel_bookings.csv")
+summary(hotelbookings)
+```
+
+```{r}
+canceled <- hotelbookings[hotelbookings$is_canceled == 1, ]
+p<-ggplot(canceled, aes(x=distribution_channel, y=is_canceled)) +
+  geom_bar(stat="identity")+theme_minimal()
+p
+```
+
+
+```{r}
+
 ```
 
