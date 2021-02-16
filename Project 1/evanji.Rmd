@@ -9,10 +9,10 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
+Reading the data and changing to factors
 ```{r}
-#Reading the Data and changing items to factors
 hotel_bookings = read.csv("hotel_bookings.csv")
-hotel_bookings$is_canceled = as.factor(hotel_bookings$is_canceled)
 hotel_bookings$is_repeated_guest = as.factor(hotel_bookings$is_repeated_guest)
 hotel_bookings$company = as.factor(hotel_bookings$company)
 hotel_bookings$hotel = as.factor(hotel_bookings$hotel)
@@ -31,3 +31,22 @@ hotel_bookings$customer_type = as.factor(hotel_bookings$customer_type)
 hotel_bookings$deposit_type = as.factor(hotel_bookings$deposit_type)
 ```
 
+
+```{r}
+ggplot(data=hotel_bookings, aes(x=is_canceled, y=lead_time, color=is_canceled)) + geom_jitter(alpha = 0.25)
+ggplot(data=hotel_bookings, aes(x=is_canceled, y=adults, color=is_canceled)) + geom_jitter(alpha = 0.25)
+ggplot(data=hotel_bookings, aes(x=is_canceled, y=babies, color=is_canceled)) + geom_jitter(alpha = 0.25)
+ggplot(data=hotel_bookings, aes(x=is_canceled, y=children, color=is_canceled)) + geom_jitter(alpha = 0.25)
+```
+More leadtime = more cancellations
+More adults = no correlation in cancellations
+More children = no correlation in cancellations
+More babies = less cancellations 
+
+Histogram where x is lead time (categorized) and y is number of cancellations
+
+```{r}
+adr1000 <- hotel_bookings[hotel_bookings$adr<1000,]
+ggplot(data=adr1000, aes(x=is_canceled, y=adr, color=is_canceled)) + geom_jitter(alpha = 0.25)
+```
+No correlation between ADR and Cancellations
