@@ -63,7 +63,7 @@ barplot(cancelratebyguests$is_canceled, col=cancelratebyguests$total_guests, nam
 
 ```
 
-#corporate vs no
+##corporate vs no
 ```{r}
 hotel_bookings$corporateornot <- ifelse(hotel_bookings$distribution_channel == "Corporate", "Corporate", "No")
 
@@ -73,11 +73,29 @@ barplot(cancelratebycorporate$is_canceled, col=c("red","blue"), names.arg = canc
 
 ```
 
+## Meal
+```{r}
+mealeffect <- tapply(hotel_bookings$is_canceled, hotel_bookings$meal, mean, na.rm = TRUE)
+barplot(sort(mealeffect), ylim = c(0,1), col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"), xlab="Meal Plan Option", ylab="Cancellation Rate")
+```
+
+## Reserved Room Type
+```{r}
+reservedroomtype <- tapply(hotel_bookings$is_canceled, hotel_bookings$reserved_room_type, mean, na.rm = TRUE)
+barplot(sort(reservedroomtype), ylim = c(0,1), col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"), xlab="Reserved Room Type", ylab="Cancellation Rate")
+```
+
+## Is Repeated Guest
+```{r}
+repeatedguest <- tapply(hotel_bookings$is_canceled, hotel_bookings$is_repeated_guest, mean, na.rm = TRUE)
+barplot(sort(repeatedguest), ylim = c(0,1), col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"), names.arg = c("Yes", "No"), xlab="Are They A Repeated Guest?", ylab="Cancellation Rate")
+```
+
 
 ## Distribution Channel
 ```{r}
 distchannel <- tapply(hotel_bookings$is_canceled, hotel_bookings$distribution_channel, mean, na.rm = TRUE)
-barplot(sort(distchannel), ylim = c(0,1), col=c("red","blue","green", "pink", "yellow"))
+barplot(sort(distchannel), ylim = c(0,1), col=c("red","blue","green", "pink", "yellow"), xlab="Distribution Channel", ylab = "Cancellation Rate")
 
 ggplot(data=hotel_bookings, aes(x=is_canceled, y = lead_time, colour=is_canceled)) + geom_jitter(alpha = 0.25)
 
