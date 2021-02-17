@@ -9,22 +9,64 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+```{r}
+hotel_bookings <- read.csv("hotel_bookings.csv")
+summary(hotel_bookings)
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+# factor needed variables
+hotel_bookings$is_repeated_guest <- as.factor(hotel_bookings$is_repeated_guest)
+hotel_bookings$company <- as.factor(hotel_bookings$company)
+hotel_bookings$hotel <- as.factor(hotel_bookings$hotel)
+hotel_bookings$arrival_date_month <- as.factor(hotel_bookings$arrival_date_month)
+hotel_bookings$arrival_date_year <- as.factor(hotel_bookings$arrival_date_year)
+hotel_bookings$meal <- as.factor(hotel_bookings$meal)
+hotel_bookings$country <- as.factor(hotel_bookings$country)
+hotel_bookings$market_segment <- as.factor(hotel_bookings$market_segment)
+hotel_bookings$distribution_channel <- as.factor(hotel_bookings$distribution_channel)
+hotel_bookings$reserved_room_type <- as.factor(hotel_bookings$reserved_room_type)
+hotel_bookings$assigned_room_type <- as.factor(hotel_bookings$assigned_room_type)
+hotel_bookings$agent <- as.factor(hotel_bookings$agent)
+hotel_bookings$reservation_status_date <- as.factor(hotel_bookings$reservation_status_date)
+hotel_bookings$reservation_status <- as.factor(hotel_bookings$reservation_status)
+hotel_bookings$customer_type <- as.factor(hotel_bookings$customer_type)
+hotel_bookings$deposit_type <- as.factor(hotel_bookings$deposit_type)
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+head(hotel_bookings)
+summary(hotel_bookings)
 
-```{r cars}
-summary(cars)
+str(hotel_bookings)
+
 ```
 
-## Including Plots
+#testing section
+```{r}
+str(hotel_bookings$distribution_channel)
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+#number of customers and effect on cancellations
+```{r}
+hotel_bookings$total_guests <- hotel_bookings$adults + hotel_bookings$children + hotel_bookings$babies
+
+summary(hotel_bookings$total_guests, na.rm=TRUE)
+
+cancelratebyguests <- aggregate(is_canceled ~ total_guests, data=hotel_bookings, mean)
+
+cancelratebyguests
+
+barplot(cancelratebyguests$is_canceled, col=cancelratebyguests$total_guests, names.arg = c("0", "1", "2", "3", "4", "5", "6", "10", "12", "20", "26", "27", "40", "50", "55"), border =TRUE, axes= TRUE, ylim=c(0,1))
+
+```
+
+#corporate vs no
+```{r}
+hotel_bookings$corporateornot <- ifelse(hotel_bookings$distribution_channel == "Corporate", "Corporate", "No")
+
+summary(hotel_bookings$corporateornot)
+
+str(hotel_bookings$corporateornot)
+```
+
