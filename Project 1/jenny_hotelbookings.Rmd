@@ -38,13 +38,6 @@ str(hotel_bookings)
 
 ```
 
-#testing section
-```{r}
-str(hotel_bookings$distribution_channel)
-
-
-```
-
 
 
 #number of customers and effect on cancellations
@@ -62,6 +55,16 @@ barplot(cancelratebyadults$is_canceled, col=cancelratebyadults$adults, names.arg
 barplot(cancelratebyguests$is_canceled, col=cancelratebyguests$total_guests, names.arg = cancelratebyguests$total_guests, xlab="Total Number of Guests", ylab="Cancellation Rate", border =TRUE, axes= TRUE, ylim=c(0,1))
 
 ```
+
+## Previous Cancellations
+```{r}
+hotel_bookings$previous_cancellations
+ 
+cancelratebyprevcancellations <- aggregate(is_canceled ~ previous_cancellations, data=hotel_bookings, mean)
+
+barplot(cancelratebyprevcancellations$is_canceled, col=cancelratebyprevcancellations$previous_cancellations, names.arg = cancelratebyprevcancellations$previous_cancellations, xlab="Total Number of Previous Cancellations", ylab="Cancellation Rate", border =TRUE, axes= TRUE, ylim=c(0,1))
+```
+
 
 ##corporate vs no
 ```{r}
@@ -96,8 +99,6 @@ barplot(sort(repeatedguest), ylim = c(0,1), col=c("lavenderblush","pink","hotpin
 ```{r}
 distchannel <- tapply(hotel_bookings$is_canceled, hotel_bookings$distribution_channel, mean, na.rm = TRUE)
 barplot(sort(distchannel), ylim = c(0,1), col=c("red","blue","green", "pink", "yellow"), xlab="Distribution Channel", ylab = "Cancellation Rate")
-
-ggplot(data=hotel_bookings, aes(x=is_canceled, y = lead_time, colour=is_canceled)) + geom_jitter(alpha = 0.25)
 
 
 ```
