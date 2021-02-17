@@ -76,4 +76,16 @@ barplot(sort(custtype), ylim = c(0,1), col=c("red","blue","green","pink"))
 marketseg <- tapply(hotel_bookings$is_canceled, hotel_bookings$market_segment, mean, na.rm = TRUE)
 barplot(sort(marketseg, decreasing = TRUE), ylim = c(0,1), legend = rownames(sort(marketseg, decreasing = TRUE)), col=c("red","blue","green","pink","yellow","black","white","gray"))
 ```
+```{r}
+#assigned room type
+assroomtype <- tapply(hotel_bookings$is_canceled, hotel_bookings$assigned_room_type, mean, na.rm = TRUE)
+barplot(sort(assroomtype), ylim = c(0,1), col=c("red","blue","green","pink"))
+```
+```{r}
+#number of special requests
+aggregate(is_canceled ~ total_of_special_requests, data=hotel_bookings, mean)
+numofspecialreqs <- aggregate(is_canceled ~ total_of_special_requests, data=hotel_bookings, mean)
+barplot(numofspecialreqs$is_canceled, ylim = c(0,.5), names.arg = numofspecialreqs$total_of_special_requests,col = c("red","blue","green","pink","yellow","darkmagenta"))
+```
+
 
