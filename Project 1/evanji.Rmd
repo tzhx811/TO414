@@ -12,6 +12,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Reading the data and changing to factors
 ```{r}
+library("ggplot2")
+library("dplyr")
 hotel_bookings = read.csv("hotel_bookings.csv")
 hotel_bookings$is_repeated_guest = as.factor(hotel_bookings$is_repeated_guest)
 hotel_bookings$company = as.factor(hotel_bookings$company)
@@ -31,8 +33,8 @@ hotel_bookings$customer_type = as.factor(hotel_bookings$customer_type)
 hotel_bookings$deposit_type = as.factor(hotel_bookings$deposit_type)
 ```
 
-Numerical data = scatter plot with x=number of whatever and y=proportion of canceled
 ```{r}
+#Guest and total guests
 hotel_bookings$totalguests <- hotel_bookings$adults + hotel_bookings$children + hotel_bookings$babies
 aggregate(is_canceled ~ adults, data=hotel_bookings, mean)
 aggregate(is_canceled ~ children, data=hotel_bookings, mean)
@@ -45,5 +47,33 @@ barplot(cancelratebyadults$is_canceled,col=cancelratebyadults$adults,names.arg=c
 ```
 
 ```{r}
+#Dist channel
 
+distchannel <- tapply(hotel_bookings$is_canceled, hotel_bookings$distribution_channel, mean, na.rm = TRUE)
+barplot(sort(distchannel), ylim = c(0,1), col=c("red","blue","green","pink","yellow"))
 ```
+```{r}
+#Lead Time
+ggplot(data=hotel_bookings, aes(x=is_canceled, y = lead_time, colour=is_canceled)) + geom_jitter(alpha = 0.25)
+```
+```{r}
+#ADR
+adr1000 <- hotel_bookings[hotel_bookings$adr<1000,]
+ggplot(data=adr1000, aes(x=is_canceled, y = adr, colour=is_canceled)) + geom_jitter(alpha = 0.25)
+```
+```{r}
+#Deposit Type
+deposittype <- tapply(hotel_bookings$is_canceled, hotel_bookings$deposit_type, mean, na.rm = TRUE)
+barplot(sort(deposittype), ylim = c(0,1), col=c("red","blue","green"))
+```
+```{r}
+#customer Type
+custtype <- tapply(hotel_bookings$is_canceled, hotel_bookings$customer_type, mean, na.rm = TRUE)
+barplot(sort(custtype), ylim = c(0,1), col=c("red","blue","green","pink"))
+```
+```{r}
+#Market Segment
+marketseg <- tapply(hotel_bookings$is_canceled, hotel_bookings$market_segment, mean, na.rm = TRUE)
+barplot(sort(marketseg, decreasing = TRUE), ylim = c(0,1), legend = rownames(sort(marketseg, decreasing = TRUE)), col=c("red","blue","green","pink","yellow","black","white","gray"))
+```
+
