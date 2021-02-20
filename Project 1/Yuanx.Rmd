@@ -1,0 +1,71 @@
+---
+title: "Yuanx"
+author: "Xincheng Yuan"
+date: "2/15/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+#Most frequent customer original countries
+```{r}
+##Load the data
+hotel_bookings = read.csv("hotel_bookings.csv")
+hotel_bookings$country <- as.character(hotel_bookings$country)
+countryorigin <- hotel_bookings[,c(1,14)]
+
+##Transform 3 digit codes into country names
+library(countrycode)
+countryorigin$country <- countrycode(countryorigin$country, "iso3c", "country.name", nomatch = NULL)
+countryorigin$country <- as.factor(countryorigin$country)
+
+```
+
+## Customer origin at Resort Hotel
+
+Most customers are coming from Portugal at both Resort Hotel and City Hotel, so there is a high chance that both hotels are based in Portugal. The top 6 countries of origin are all European countries with some variation in rankings among 2 hotels.
+```{r}
+originofRH <- countryorigin[countryorigin$hotel == "Resort Hotel",]
+RH <- table(originofRH$country)
+barplot((sort(RH, decreasing = TRUE))[1:6], main = "Top 6 Countries of Customer Origin at Resort Hotel", ylab = "# of visitors", col=c("red", "white", "yellow", "green", "blue", "orange"), cex.names = 0.8)
+```
+
+The resort Hotel have more foreign customers from UK(#2) and Ireland(#4). Many families from Northern Europe choose to spend their holidays at Iberian peninsula, where has warmer wheather comparing to their home countries. We also see visitors from Spain(#3) and France(#5) due to geographical closeness.
+
+## Customer origin at City Hotel
+```{r}
+originofC <- countryorigin[countryorigin$hotel == "City Hotel",]
+CH <- table(originofC$country)
+barplot((sort(CH, decreasing = TRUE))[1:6], main = "Top 6 Countries of Customer Origin at City Hotel", ylab = "# of visitors", col=c("red", "blue", "orange", "white", "yellow", "dark green"), cex.names = 0.8)
+```
+
+At City Hotel, we see most foreign customers from France, Germany, UK, Spain, and Italy. Those 5 countries are also the 5 countries with the highest GDP in the European Union (before Brexit). Given that a lot of City Hotel customers travel for business purposes, it makes sense that those customers are coming from the bigger economies of EU and come to Portugal to handle their business. 
+
+#Customer Satisfaction/Loyalty
+##Percentage of Repeated Guests
+It would be helpful for us to determine customer satisfaction & loyalty by looking deep into the repeated guest data and their respective cancellation rate 
+```{r}
+hotel_bookings$hotel <- as.factor(hotel_bookings$hotel)
+repeatedguestportion <- tapply(hotel_bookings$is_repeated_guest, hotel_bookings$hotel, mean, na.rm = TRUE)
+round(repeatedguestportion, digits = 3)
+```
+Resort Hotel tend to have more repeated guests than City Hotel.
+```{r}
+barplot(repeatedguestportion, col=c("blue","orange"), border =TRUE, axes= TRUE, ylim=c(0,0.05), main = "Percentage of repeated guest by hotel")
+```
+
+Both hotels have relatively low percentage of repeated guests (less than 5%), which projects low satisfaction and loyalty. 
+
+##Cancellation Rate of Repeated Guests
+```{r}
+hotel_bookings$repeatedFact <- as.factor(hotel_bookings$is_repeated_guest)
+temp_t1 <- aggregate(is_canceled ~ repeatedFact + hotel, data = hotel_bookings, mean)
+barplot(temp_t1$is_canceled, names.arg = c("City Non-Repeated", "City Repeated", "Resort Non-Repeated", "Resort Repeated"), col=c("dark blue","blue","dark orange","orange"), border =TRUE, axes= TRUE, ylim=c(0,0.5), cex.names = 0.8, main = "Repeated & Non-Repeated Guest Cancelleation rate by hotel")
+
+```
+
+Repeated guests have much lower canlleation rate at both hotel, which shows loyalty and trust to the hotel, especially the Resort Hotel repeated guests.
+
