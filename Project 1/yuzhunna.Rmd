@@ -15,13 +15,6 @@ hotelbookings <- read.csv("hotel_bookings.csv")
 summary(hotelbookings)
 ```
 
-```{r}
-canceled <- hotelbookings[hotelbookings$is_canceled == 1, ]
-p<-ggplot(canceled, aes(x=distribution_channel, y=is_canceled)) +
-  geom_bar(stat="identity")+theme_minimal()
-p
-```
-
 
 ```{r}
 # New col for total guests
@@ -57,7 +50,15 @@ barplot(cancelratebyguests$is_canceled, col=cancelratebyguests$total_guests, nam
 
 canceledbydistchannel <- tapply(hotelbookings$is_canceled, hotelbookings$distribution_channel, mean, na.rm = TRUE)
 barplot(sort(canceledbydistchannel, decreasing = TRUE),ylab = "Cancellation Rate",xlab = "Distribution Channel", ylim = c(0,1), col = c("red","blue","green", "pink","yellow"))
+
+canceled <- hotelbookings[hotelbookings$is_canceled == 1, ]
+p<-ggplot(canceled, aes(x=distribution_channel, y=is_canceled)) +
+  geom_bar(stat="identity")+theme_minimal()
+p
 ```
+
+From the graph above, we can see that the "Undefined" distribution channel has the highest cancellation rate.However, when we look at quantity canceled for the Undefined channel in the second graph, we see that there are very few total "Undefined" cancellations despite the rate being very high. Aside from this, the channel with the highest cancellation rate is Travel Agents and Tour Operations.This distribution channel also has the highest total number of cancellations.
+
 
 
 ```{r}
@@ -66,4 +67,4 @@ hotelbookings$totalstaylength <- hotelbookings$stays_in_week_nights + hotelbooki
 ggplot(data=hotelbookings, aes(x=totalstaylength, y=total_of_special_requests, colour=is_canceled)) + geom_point(size=2, alpha=.5) + geom_smooth(method = "lm") + geom_jitter()
 ```
 
-From the graph above, there are two conclusions that can be made. First, shorter stays seem to be linked with more special requests. Second, longer stays seem to have more cancellations than shorter stays. Based on this information, shorter stays should be targeted as special requests are higher and there also tends to be less cancellations.
+From the graph above, there are two conclusions that can be made. First, shorter stays seem to be linked with more special requests. Second, longer stays seem to have more cancellations than shorter stays. Based on this information, shorter stays should be targeted as special requests are higher (which could bring additional revenue) and there also tends to be less cancellations.
