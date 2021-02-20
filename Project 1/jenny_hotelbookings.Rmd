@@ -40,7 +40,7 @@ str(hotel_bookings)
 
 
 
-#number of customers and effect on cancellations
+##number of customers and effect on cancellations
 ```{r}
 hotel_bookings$total_guests <- hotel_bookings$adults + hotel_bookings$children + hotel_bookings$babies
 
@@ -55,6 +55,9 @@ barplot(cancelratebyadults$is_canceled, col=cancelratebyadults$adults, names.arg
 barplot(cancelratebyguests$is_canceled, col=cancelratebyguests$total_guests, names.arg = cancelratebyguests$total_guests, xlab="Total Number of Guests", ylab="Cancellation Rate", border =TRUE, axes= TRUE, ylim=c(0,1))
 
 ```
+<p>
+<p> According to this chart, there seems to be a relationship between the total number of guests on each booking and the cancellation rate. One reason that might explain this relationship is that larger groups are difficult to organize and have a higher chance of one member deciding that they no longer want to go on the trip. 
+
 
 ## Previous Cancellations
 ```{r}
@@ -64,7 +67,8 @@ cancelratebyprevcancellations <- aggregate(is_canceled ~ previous_cancellations,
 
 barplot(cancelratebyprevcancellations$is_canceled, col=cancelratebyprevcancellations$previous_cancellations, names.arg = cancelratebyprevcancellations$previous_cancellations, xlab="Total Number of Previous Cancellations", ylab="Cancellation Rate", border =TRUE, axes= TRUE, ylim=c(0,1))
 ```
-
+<p>
+<p> According to the chart, there seems to be a relationship between the number of previous cancellations and the cancellation rate. On average, guests with a higher number of previous cancellations seem to have higher rates of cancellations. One possible reason for this occurrence is that individual guests may have a habit of repeatedly canceling reservations. One anomaly that we saw was that guests with 1 previous cancellation had a high level of cancellation rates, which we didn't expect. This may possibly be due to the data set selection process.
 
 ##corporate vs no
 ```{r}
@@ -76,12 +80,16 @@ barplot(cancelratebycorporate$is_canceled, col=c("red","blue"), names.arg = canc
 
 
 ```
+<p>
+<p> Corporate bookings tend to cancel at a much lower rate than non corporate bookings. A possible reason for this is that corporate bookings are paid for by the companies who are less likely to take the time to cancel individual bookings.
 
 ## Meal
 ```{r}
 mealeffect <- tapply(hotel_bookings$is_canceled, hotel_bookings$meal, mean, na.rm = TRUE)
 barplot(sort(mealeffect), ylim = c(0,1), col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"), xlab="Meal Plan Option", ylab="Cancellation Rate")
 ```
+<p>
+<p>In general guests with the FB meal plan tend to have the highest rates of cancellation, but there isn't a significant difference in cancellation rates with all the other meal plan options.
 
 ## Reserved Room Type
 ```{r}
@@ -89,19 +97,16 @@ reservedroomtype <- tapply(hotel_bookings$is_canceled, hotel_bookings$reserved_r
 barplot(sort(reservedroomtype), ylim = c(0,1), col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"), xlab="Reserved Room Type", ylab="Cancellation Rate")
 
 ```
+<p>
+<p> Reservations of the "P" room type are the most likely to be canceled, while reservations of the "E" room type are least likely to be canceled.
 
 ## Is Repeated Guest
 ```{r}
 repeatedguest <- tapply(hotel_bookings$is_canceled, hotel_bookings$is_repeated_guest, mean, na.rm = TRUE)
 barplot(sort(repeatedguest), ylim = c(0,1), col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"), names.arg = c("Yes", "No"), xlab="Are They A Repeated Guest?", ylab="Cancellation Rate")
 ```
+<p> 
+<p> Repeated guests have a siginificantly lower cancellation rate than not repeated guests. One reason for this may be that the hotels and resorts have really great customer loyalty and customer service, which encourages guests to come back.
 
 
-## Distribution Channel
-```{r}
-distchannel <- tapply(hotel_bookings$is_canceled, hotel_bookings$distribution_channel, mean, na.rm = TRUE)
-barplot(sort(distchannel), ylim = c(0,1), col=c("red","blue","green", "pink", "yellow"), xlab="Distribution Channel", ylab = "Cancellation Rate")
-
-
-```
 
