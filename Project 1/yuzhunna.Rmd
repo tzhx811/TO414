@@ -24,6 +24,46 @@ p
 
 
 ```{r}
+# New col for total guests
+hotelbookings$total_guests <- hotelbookings$adults + hotelbookings$children + hotelbookings$babies
+hotelbookings$total_guestsfactor <- as.factor(hotelbookings$total_guests)
+
+aggregate(is_canceled ~ adults, data=hotelbookings, mean)
+aggregate(is_canceled ~ children, data=hotelbookings, mean)
+aggregate(is_canceled ~ babies, data=hotelbookings, mean)
+
+nrow(hotelbookings)
+nrow(hotelbookings[hotelbookings$is_canceled == 1, ])
+
+summary(hotelbookings$total_guests)
+cancelratebyguests <- aggregate(is_canceled ~ total_guests, data=hotelbookings, mean)
+
+cancelratebyguests
+
+barplot(cancelratebyguests$is_canceled, col=cancelratebyguests$total_guests, border =TRUE, axes= TRUE, ylim=c(0,1))
+
+
+barplot(tapply(hotelbookings$is_canceled,hotelbookings$total_guestsfactor, mean, na.rm = TRUE), border = TRUE, axes = TRUE, ylim = c(0,1))
+
+barplot(cancelratebyguests$is_canceled, col=cancelratebyguests$total_guests, names.arg = cancelratebyguests$total_guests, xlab="Total Number of Guests", ylab="Cancellation Rate", border =TRUE, axes= TRUE, ylim=c(0,1))
+
 
 ```
 
+
+
+```{r}
+# Distribution Channel
+
+canceledbydistchannel <- tapply(hotelbookings$is_canceled, hotelbookings$distribution_channel, mean, na.rm = TRUE)
+barplot(sort(canceledbydistchannel, decreasing = TRUE),ylab = "Cancellation Rate",xlab = "Distribution Channel", ylim = c(0,1), col = c("red","blue","green", "pink","yellow"))
+```
+
+
+```{r}
+# relationship btwn # of special requests and total stay length, color coded by is_canceled
+hotelbookings$totalstaylength <- hotelbookings$stays_in_week_nights + hotelbookings$stays_in_weekend_nights
+ggplot(data=hotelbookings, aes(x=totalstaylength, y=total_of_special_requests, colour=is_canceled)) + geom_point(size=2, alpha=.5) + geom_smooth(method = "lm") + geom_jitter()
+```
+
+From the graph above, there are two conclusions that can be made. First, shorter stays seem to be linked with more special requests. Second, longer stays seem to have more cancellations than shorter stays.
