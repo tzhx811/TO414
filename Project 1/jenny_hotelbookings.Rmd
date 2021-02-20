@@ -74,6 +74,7 @@ cancelratebycorporate <- aggregate(is_canceled ~ corporateornot, data=hotel_book
 
 barplot(cancelratebycorporate$is_canceled, col=c("red","blue"), names.arg = cancelratebycorporate$corporateornot, xlab="Booking Type", ylab="Cancellation Rate", border =TRUE, axes= TRUE, ylim=c(0,1))
 
+
 ```
 
 ## Meal
@@ -86,6 +87,7 @@ barplot(sort(mealeffect), ylim = c(0,1), col=c("lavenderblush","pink","hotpink",
 ```{r}
 reservedroomtype <- tapply(hotel_bookings$is_canceled, hotel_bookings$reserved_room_type, mean, na.rm = TRUE)
 barplot(sort(reservedroomtype), ylim = c(0,1), col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"), xlab="Reserved Room Type", ylab="Cancellation Rate")
+
 ```
 
 ## Is Repeated Guest
