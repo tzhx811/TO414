@@ -86,6 +86,15 @@ barplot(temp_t1$is_canceled, names.arg = c("City Non-Repeated", "City Repeated",
 It looks like repeat guests for both Resort and City hotel have a lower cancellation rate than non-repeat guests. This makes sense as those you repeat bookings probably do so because they trust the hotel and are satisfied with their last visit. 
 
 # Variables Ran Against Cancellation Rate
+
+### Hotel Type
+```{r}
+hoteltype <- tapply(hotel_bookings$is_canceled, hotel_bookings$hotel, mean, na.rm = TRUE)
+barplot(sort(hoteltype), ylim = c(0,1), col=c("lavenderblush", "deeppink"))
+```
+<p>
+<p> Here we can see that Resort Hotel has a lower overall cancellation rate than City Hotel. This being said, Resort Hotel still has an overall cancellation rate of 35% while City Hotel still has an overall cancellation rate of 40+ %. 
+
 ### Number of Customers and Effect on Cancellations
 ```{r}
 hotel_bookings$total_guests <- hotel_bookings$adults + hotel_bookings$children + hotel_bookings$babies
@@ -126,6 +135,35 @@ barplot(cancelratebycorporate$is_canceled, col=c("lavenderblush","pink","hotpink
 <p>
 <p> Corporate bookings tend to cancel at a much lower rate than non corporate bookings. A possible reason for this is that corporate bookings are paid for by the companies who are less likely to take the time to cancel individual bookings.
 
+### Distribution Channel
+```{r}
+canceledbydistchannel <- tapply(hotel_bookings$is_canceled, hotel_bookings$distribution_channel, mean, na.rm = TRUE)
+barplot(sort(canceledbydistchannel, decreasing = TRUE),ylab = "Cancellation Rate",xlab = "Distribution Channel", ylim = c(0,1), col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"))
+
+canceled <- hotel_bookings[hotel_bookings$is_canceled == 1, ]
+p<-ggplot(canceled, aes(x=distribution_channel, y=is_canceled)) +
+  geom_bar(stat="identity", fill="pink") +theme_minimal()
+p
+```
+<p>
+<p> From the graph above, we can see that the "Undefined" distribution channel has the highest cancellation rate.However, when we look at quantity canceled for the Undefined channel in the second graph, we see that there are very few total "Undefined" cancellations despite the rate being very high. Aside from this, the channel with the highest cancellation rate is Travel Agents and Tour Operations.This distribution channel also has the highest total number of cancellations.
+
+### Market Segment
+```{r}
+marketseg <- tapply(hotel_bookings$is_canceled, hotel_bookings$market_segment, mean, na.rm = TRUE)
+barplot(sort(marketseg, decreasing = TRUE), ylim = c(0,1), legend = rownames(sort(marketseg, decreasing = TRUE)), col=c("lavenderblush","mistyrose", "pink", "lightpink","hotpink", "deeppink", "deeppink4", "maroon4"), las = 2)
+```
+<p>
+<p>Here, we can see that the "Undefined" market segment has almost a 100% cancellation rate while the "Complementary" segment has the lowest rate at around 20%.
+
+### Customer Type
+```{r}
+custtype <- tapply(hotel_bookings$is_canceled, hotel_bookings$customer_type, mean, na.rm = TRUE)
+barplot(sort(custtype), ylim = c(0,1), col=c("red","blue","green","pink"))
+```
+<p>
+<p> From this barplot we can see which types of customers are more likely to cancel across all customer types. We can see that "group" customers have the lowest cancellation rate (around 10%) while "transient" customers have the highest (around 40%).
+
 ### Meal
 ```{r}
 mealeffect <- tapply(hotel_bookings$is_canceled, hotel_bookings$meal, mean, na.rm = TRUE)
@@ -133,6 +171,14 @@ barplot(sort(mealeffect), ylim = c(0,1), col=c("lavenderblush","pink","hotpink",
 ```
 <p>
 <p>In general guests with the FB meal plan tend to have the highest rates of cancellation, but there isn't a significant difference in cancellation rates with all the other meal plan options.
+
+### Assigned Room Type
+```{r}
+assroomtype <- tapply(hotel_bookings$is_canceled, hotel_bookings$assigned_room_type, mean, na.rm = TRUE)
+barplot(sort(assroomtype), ylim = c(0,1), col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"))
+```
+<p>
+<p> Reservations that were assigned room "P" and "L" had a cancellation rate of almost 100%, while those assigned room "I" had a almost 0% cancellation rate. 
 
 ### Reserved Room Type
 ```{r}
@@ -150,4 +196,47 @@ barplot(sort(repeatedguest), ylim = c(0,1), col=c("lavenderblush","pink","hotpin
 ```
 <p> 
 <p> Repeated guests have a significantly lower cancellation rate than not repeated guests. One reason for this may be that the hotels and resorts have really great customer loyalty and customer service, which encourages guests to come back.
+
+### Lead Time
+```{r}
+ggplot(data=hotel_bookings, aes(x=is_canceled, y = lead_time, colour=is_canceled)) + geom_jitter(alpha = 0.25)
+```
+<p> 
+<p> Based on this jitter plot, we can see that there is a correlation between cancellation rate and lead time. It seems that as lead time to booking increases, the chance of cancellation also increases. This is depicted by the larger density of points in the 300-700 days for the canceled (1) bar versus the not-canceled (0) bar.
+
+### ADR
+```{r}
+adr1000 <- hotel_bookings[hotel_bookings$adr<1000,]
+ggplot(data=adr1000, aes(x=is_canceled, y = adr, colour=is_canceled)) + geom_jitter(alpha = 0.25)
+```
+<p>
+<p> Based on this jitter plot, we can not make any conclusions about the correlation between ADR and cancellation rate. 
+
+### Deposit Type
+```{r}
+deposittype <- tapply(hotel_bookings$is_canceled, hotel_bookings$deposit_type, mean, na.rm = TRUE)
+barplot(sort(deposittype), ylim = c(0,1), col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"))
+summary(hotel_bookings$deposit_type)
+```
+<p>
+<p> From the bar plot we can see that non-refund deposit types have almost a 100% cancellation rate, while refundable and non-refundable deposit types have close to 20% and 30% cancellation rate. The sample size for the non-refund category is not small either (14,000+), making this discovery somewhat surprising as we would expect lower cancellation rates for deposit types that are not refundable. This is an insight we can take into account when developing our deposit type strategy structure. 
+
+### Number of Special Requests
+```{r}
+#number of special requests
+aggregate(is_canceled ~ total_of_special_requests, data=hotel_bookings, mean)
+numofspecialreqs <- aggregate(is_canceled ~ total_of_special_requests, data=hotel_bookings, mean)
+barplot(numofspecialreqs$is_canceled, ylim = c(0,.5), names.arg = numofspecialreqs$total_of_special_requests,col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"))
+```
+<p>
+<p> Based on this barplot, we see that as number of special requests increase, the rate of cancellations decrease. This makes sense because as more and more special requests are made, it is less likely that they will cancel for another booking because they would have to re-set-up those special requests. Also, it could be explained by the fact that the customer becomes more invested as number of special requests increase. 
+
+### Relationships between Cancellations, Total Stay Length, and Number of Special Requests
+```{r}
+hotelbookings$totalstaylength <- hotelbookings$stays_in_week_nights + hotelbookings$stays_in_weekend_nights
+ggplot(data=hotelbookings, aes(x=totalstaylength, y=total_of_special_requests, colour=is_canceled)) + geom_point(size=2, alpha=.5) + geom_smooth(method = "lm") + geom_jitter()
+```
+<p>
+<p>From the graph above, there are two conclusions that can be made. First, shorter stays seem to be linked with more special requests. Second, longer stays seem to have more cancellations than shorter stays. Based on this information, medium length stays should be targeted as special requests are lower and there also tends to be less relative cancellations.
+
 
