@@ -66,4 +66,4 @@ hotelbookings$totalstaylength <- hotelbookings$stays_in_week_nights + hotelbooki
 ggplot(data=hotelbookings, aes(x=totalstaylength, y=total_of_special_requests, colour=is_canceled)) + geom_point(size=2, alpha=.5) + geom_smooth(method = "lm") + geom_jitter()
 ```
 
-
+From the graph above, there are two conclusions that can be made. First, shorter stays seem to be linked with more special requests. Second, longer stays seem to have more cancellations than shorter stays.
