@@ -1,0 +1,96 @@
+---
+title: "evanji"
+author: "Evan Jiang"
+date: "2/16/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Reading the data and changing to factors
+```{r}
+library("ggplot2")
+library("dplyr")
+hotel_bookings = read.csv("hotel_bookings.csv")
+hotel_bookings$is_repeated_guest = as.factor(hotel_bookings$is_repeated_guest)
+hotel_bookings$company = as.factor(hotel_bookings$company)
+hotel_bookings$hotel = as.factor(hotel_bookings$hotel)
+hotel_bookings$arrival_date_month = as.factor(hotel_bookings$arrival_date_month)
+hotel_bookings$arrival_date_year = as.factor(hotel_bookings$arrival_date_year)
+hotel_bookings$meal = as.factor(hotel_bookings$meal)
+hotel_bookings$country = as.factor(hotel_bookings$country)
+hotel_bookings$market_segment = as.factor(hotel_bookings$market_segment)
+hotel_bookings$distribution_channel = as.factor(hotel_bookings$distribution_channel)
+hotel_bookings$reserved_room_type = as.factor(hotel_bookings$reserved_room_type)
+hotel_bookings$assigned_room_type = as.factor(hotel_bookings$assigned_room_type)
+hotel_bookings$agent = as.factor(hotel_bookings$agent)
+hotel_bookings$reservation_status_date = as.factor(hotel_bookings$reservation_status_date)
+hotel_bookings$reservation_status = as.factor(hotel_bookings$reservation_status)
+hotel_bookings$customer_type = as.factor(hotel_bookings$customer_type)
+hotel_bookings$deposit_type = as.factor(hotel_bookings$deposit_type)
+```
+
+```{r}
+#Guest and total guests
+hotel_bookings$totalguests <- hotel_bookings$adults + hotel_bookings$children + hotel_bookings$babies
+aggregate(is_canceled ~ adults, data=hotel_bookings, mean)
+aggregate(is_canceled ~ children, data=hotel_bookings, mean)
+aggregate(is_canceled ~ babies, data=hotel_bookings, mean)
+aggregate(is_canceled ~ totalguests, data=hotel_bookings, mean)
+cancelratebyguests <- aggregate(is_canceled ~ totalguests, data=hotel_bookings, mean)
+barplot(cancelratebyguests$is_canceled,col=cancelratebyguests$totalguests,names.arg=cancelratebyguests$totalguests,xlab="Total Number of Guests",ylab="Cancellation Rate",border=TRUE,axes=TRUE,ylim=c(0,1))
+cancelratebyadults <- aggregate(is_canceled ~ adults, data=hotel_bookings, mean)
+barplot(cancelratebyadults$is_canceled,col=cancelratebyadults$adults,names.arg=cancelratebyadults$adults,xlab="Total Number of Adults",ylab="Cancellation Rate",border=TRUE,axes=TRUE,ylim=c(0,1))
+```
+
+```{r}
+#Dist channel
+
+distchannel <- tapply(hotel_bookings$is_canceled, hotel_bookings$distribution_channel, mean, na.rm = TRUE)
+barplot(sort(distchannel), ylim = c(0,1), col=c("red","blue","green","pink","yellow"))
+```
+```{r}
+#Lead Time
+ggplot(data=hotel_bookings, aes(x=is_canceled, y = lead_time, colour=is_canceled)) + geom_jitter(alpha = 0.25)
+```
+```{r}
+#ADR
+adr1000 <- hotel_bookings[hotel_bookings$adr<1000,]
+ggplot(data=adr1000, aes(x=is_canceled, y = adr, colour=is_canceled)) + geom_jitter(alpha = 0.25)
+```
+```{r}
+#Deposit Type
+deposittype <- tapply(hotel_bookings$is_canceled, hotel_bookings$deposit_type, mean, na.rm = TRUE)
+barplot(sort(deposittype), ylim = c(0,1), col=c("red","blue","green"))
+```
+```{r}
+#customer Type
+custtype <- tapply(hotel_bookings$is_canceled, hotel_bookings$customer_type, mean, na.rm = TRUE)
+barplot(sort(custtype), ylim = c(0,1), col=c("red","blue","green","pink"))
+```
+```{r}
+#Market Segment
+marketseg <- tapply(hotel_bookings$is_canceled, hotel_bookings$market_segment, mean, na.rm = TRUE)
+barplot(sort(marketseg, decreasing = TRUE), ylim = c(0,1), legend = rownames(sort(marketseg, decreasing = TRUE)), col=c("red","blue","green","pink","yellow","black","white","gray"), las = 2)
+```
+```{r}
+#assigned room type
+assroomtype <- tapply(hotel_bookings$is_canceled, hotel_bookings$assigned_room_type, mean, na.rm = TRUE)
+barplot(sort(assroomtype), ylim = c(0,1), col=c("red","blue","green","pink"))
+```
+```{r}
+#number of special requests
+aggregate(is_canceled ~ total_of_special_requests, data=hotel_bookings, mean)
+numofspecialreqs <- aggregate(is_canceled ~ total_of_special_requests, data=hotel_bookings, mean)
+barplot(numofspecialreqs$is_canceled, ylim = c(0,.5), names.arg = numofspecialreqs$total_of_special_requests,col = c("red","blue","green","pink","yellow","darkmagenta"))
+```
+```{r}
+#Hotel Type
+hoteltype <- tapply(hotel_bookings$is_canceled, hotel_bookings$hotel, mean, na.rm = TRUE)
+barplot(sort(hoteltype), ylim = c(0,1), col=c("red","blue"))
+```
+
+

@@ -1,0 +1,242 @@
+---
+title: "Master File"
+author: "Yusuf Uzhunnan, Tony Zhao, Jenny Yu, Evan Jiang, Xincheng Yuan"
+date: "2/20/2021"
+output: html_document
+---
+# Data Loading and Cleaning. Loading Important Packages
+```{r}
+library("ggplot2")
+library("dplyr")
+hotel_bookings = read.csv("hotel_bookings.csv")
+hotel_bookings$company = as.factor(hotel_bookings$company)
+hotel_bookings$hotel = as.factor(hotel_bookings$hotel)
+hotel_bookings$arrival_date_month = as.factor(hotel_bookings$arrival_date_month)
+hotel_bookings$arrival_date_year = as.factor(hotel_bookings$arrival_date_year)
+hotel_bookings$meal = as.factor(hotel_bookings$meal)
+hotel_bookings$country = as.factor(hotel_bookings$country)
+hotel_bookings$market_segment = as.factor(hotel_bookings$market_segment)
+hotel_bookings$distribution_channel = as.factor(hotel_bookings$distribution_channel)
+hotel_bookings$reserved_room_type = as.factor(hotel_bookings$reserved_room_type)
+hotel_bookings$assigned_room_type = as.factor(hotel_bookings$assigned_room_type)
+hotel_bookings$agent = as.factor(hotel_bookings$agent)
+hotel_bookings$reservation_status_date = as.factor(hotel_bookings$reservation_status_date)
+hotel_bookings$reservation_status = as.factor(hotel_bookings$reservation_status)
+hotel_bookings$customer_type = as.factor(hotel_bookings$customer_type)
+hotel_bookings$deposit_type = as.factor(hotel_bookings$deposit_type)
+```
+
+
+# Most Frequent Customer Origin Country
+```{r}
+#Load the data
+hotel_bookings$country <- as.character(hotel_bookings$country)
+countryorigin <- hotel_bookings[,c(1,14)]
+
+#Transform 3 digit codes into country names
+library(countrycode)
+countryorigin$country <- countrycode(countryorigin$country, "iso3c", "country.name", nomatch = NULL)
+countryorigin$country <- as.factor(countryorigin$country)
+
+```
+
+### Customer Origin at Resort Hotel
+```{r}
+originofRH <- countryorigin[countryorigin$hotel == "Resort Hotel",]
+RH <- table(originofRH$country)
+barplot((sort(RH, decreasing = TRUE))[1:6], main = "Top 6 Countries of Customer Origin at Resort Hotel", ylab = "# of visitors", col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"), cex.names = 0.8)
+```
+
+The Resort Hotel has more foreign customers from UK(#2) and Ireland(#4). Many families from Northern Europe choose to spend their holidays at Iberian peninsula, where has warmer weather comparing to their home countries. We also see visitors from Spain(#3) and France(#5) due to geographical closeness.
+
+### Customer Origin at City Hotel
+```{r}
+originofC <- countryorigin[countryorigin$hotel == "City Hotel",]
+CH <- table(originofC$country)
+barplot((sort(CH, decreasing = TRUE))[1:6], main = "Top 6 Countries of Customer Origin at City Hotel", ylab = "# of visitors", col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"), cex.names = 0.8)
+```
+
+At City Hotel, we see most foreign customers from France, Germany, UK, Spain, and Italy. Those 5 countries are also the 5 countries with the highest GDP in the European Union (before Brexit). Given that a lot of City Hotel customers travel for business purposes, it makes sense that those customers are coming from the bigger economies of EU and come to Portugal to handle their business. 
+
+**Summary:**
+Most customers are coming from Portugal at both Resort Hotel and City Hotel, so there is a high chance that both hotels are based in Portugal. The top 6 countries of origin are all European countries with some variation in rankings among 2 hotels.
+
+# Customer Satisfaction/Loyalty
+### Percentage of Repeated Guests
+It would be helpful for us to determine customer satisfaction & loyalty by looking deep into the repeated guest data and their respective cancellation rate 
+```{r}
+repeatedguestportion <- tapply(hotel_bookings$is_repeated_guest, hotel_bookings$hotel, mean, na.rm = TRUE)
+round(repeatedguestportion, digits = 3)
+```
+Resort Hotel tend to have more repeated guests than City Hotel.
+```{r}
+barplot(repeatedguestportion, col=c("blue", "orange") , border =TRUE, axes= TRUE, ylim=c(0,0.05), main = "Percentage of repeated guest by hotel")
+```
+
+Both hotels have relatively low percentage of repeated guests (less than 5%), which projects low satisfaction and loyalty. 
+
+### Cancellation Rate of Repeated Guests
+```{r}
+hotel_bookings$repeatedFact <- as.factor(hotel_bookings$is_repeated_guest)
+temp_t1 <- aggregate(is_canceled ~ repeatedFact + hotel, data = hotel_bookings, mean)
+barplot(temp_t1$is_canceled, names.arg = c("City Non-Repeated", "City Repeated", "Resort Non-Repeated", "Resort Repeated"), col=c("dark blue","blue","dark orange","orange"), border =TRUE, axes= TRUE, ylim=c(0,0.5), cex.names = 0.8, main = "Repeated & Non-Repeated Guest Cancelleation rate by hotel")
+
+```
+
+It looks like repeat guests for both Resort and City hotel have a lower cancellation rate than non-repeat guests. This makes sense as those you repeat bookings probably do so because they trust the hotel and are satisfied with their last visit. 
+
+# Variables Ran Against Cancellation Rate
+
+### Hotel Type
+```{r}
+hoteltype <- tapply(hotel_bookings$is_canceled, hotel_bookings$hotel, mean, na.rm = TRUE)
+barplot(sort(hoteltype), ylim = c(0,1), col=c("lavenderblush", "deeppink"))
+```
+<p>
+<p> Here we can see that Resort Hotel has a lower overall cancellation rate than City Hotel. This being said, Resort Hotel still has an overall cancellation rate of 35% while City Hotel still has an overall cancellation rate of 40+ %. 
+
+### Number of Customers and Effect on Cancellations
+```{r}
+hotel_bookings$total_guests <- hotel_bookings$adults + hotel_bookings$children + hotel_bookings$babies
+
+cancelratebyadults <- aggregate(is_canceled ~ adults, data=hotel_bookings, mean)
+
+cancelratebyguests <- aggregate(is_canceled ~ total_guests, data=hotel_bookings, mean)
+
+barplot(cancelratebyadults$is_canceled, col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"), names.arg = cancelratebyadults$adults, xlab="Total Number of Adults", ylab="Cancellation Rate", border =TRUE, axes= TRUE, ylim=c(0,1))
+
+barplot(cancelratebyguests$is_canceled, col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"), names.arg = cancelratebyguests$total_guests, xlab="Total Number of Guests", ylab="Cancellation Rate", border =TRUE, axes= TRUE, ylim=c(0,1))
+
+```
+<p>
+<p> According to this chart, there seems to be a relationship between the total number of guests on each booking and the cancellation rate. One reason that might explain this relationship is that larger groups are difficult to organize and have a higher chance of one member deciding that they no longer want to go on the trip. 
+
+
+### Previous Cancellations
+```{r}
+ 
+cancelratebyprevcancellations <- aggregate(is_canceled ~ previous_cancellations, data=hotel_bookings, mean)
+
+barplot(cancelratebyprevcancellations$is_canceled, col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"), names.arg = cancelratebyprevcancellations$previous_cancellations, xlab="Total Number of Previous Cancellations", ylab="Cancellation Rate", border =TRUE, axes= TRUE, ylim=c(0,1))
+```
+<p>
+<p> According to the chart, there seems to be a relationship between the number of previous cancellations and the cancellation rate. On average, guests with a higher number of previous cancellations seem to have higher rates of cancellations. One possible reason for this occurrence is that individual guests may have a habit of repeatedly canceling reservations. One anomaly that we saw was that guests with 1 previous cancellation had a high level of cancellation rates, which we didn't expect. This may possibly be due to the data set selection process.
+
+### Corporate vs Non-Corproate
+```{r}
+hotel_bookings$corporateornot <- ifelse(hotel_bookings$distribution_channel == "Corporate", "Corporate", "No")
+
+cancelratebycorporate <- aggregate(is_canceled ~ corporateornot, data=hotel_bookings, mean)
+
+barplot(cancelratebycorporate$is_canceled, col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"), names.arg = cancelratebycorporate$corporateornot, xlab="Booking Type", ylab="Cancellation Rate", border =TRUE, axes= TRUE, ylim=c(0,1))
+
+
+```
+<p>
+<p> Corporate bookings tend to cancel at a much lower rate than non corporate bookings. A possible reason for this is that corporate bookings are paid for by the companies who are less likely to take the time to cancel individual bookings.
+
+### Distribution Channel
+```{r}
+canceledbydistchannel <- tapply(hotel_bookings$is_canceled, hotel_bookings$distribution_channel, mean, na.rm = TRUE)
+barplot(sort(canceledbydistchannel, decreasing = TRUE),ylab = "Cancellation Rate",xlab = "Distribution Channel", ylim = c(0,1), col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"))
+
+canceled <- hotel_bookings[hotel_bookings$is_canceled == 1, ]
+p<-ggplot(canceled, aes(x=distribution_channel, y=is_canceled)) +
+  geom_bar(stat="identity", fill="pink") +theme_minimal()
+p
+```
+<p>
+<p> From the graph above, we can see that the "Undefined" distribution channel has the highest cancellation rate.However, when we look at quantity canceled for the Undefined channel in the second graph, we see that there are very few total "Undefined" cancellations despite the rate being very high. Aside from this, the channel with the highest cancellation rate is Travel Agents and Tour Operations.This distribution channel also has the highest total number of cancellations.
+
+### Market Segment
+```{r}
+marketseg <- tapply(hotel_bookings$is_canceled, hotel_bookings$market_segment, mean, na.rm = TRUE)
+barplot(sort(marketseg, decreasing = TRUE), ylim = c(0,1), legend = rownames(sort(marketseg, decreasing = TRUE)), col=c("lavenderblush","mistyrose", "pink", "lightpink","hotpink", "deeppink", "deeppink4", "maroon4"), las = 2)
+```
+<p>
+<p>Here, we can see that the "Undefined" market segment has almost a 100% cancellation rate while the "Complementary" segment has the lowest rate at around 20%.
+
+### Customer Type
+```{r}
+custtype <- tapply(hotel_bookings$is_canceled, hotel_bookings$customer_type, mean, na.rm = TRUE)
+barplot(sort(custtype), ylim = c(0,1), col=c("red","blue","green","pink"))
+```
+<p>
+<p> From this barplot we can see which types of customers are more likely to cancel across all customer types. We can see that "group" customers have the lowest cancellation rate (around 10%) while "transient" customers have the highest (around 40%).
+
+### Meal Plan
+```{r}
+mealeffect <- tapply(hotel_bookings$is_canceled, hotel_bookings$meal, mean, na.rm = TRUE)
+barplot(sort(mealeffect), ylim = c(0,1), col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"), xlab="Meal Plan Option", ylab="Cancellation Rate")
+```
+<p>
+<p>In general guests with the FB meal plan tend to have the highest rates of cancellation, but there isn't a significant difference in cancellation rates with all the other meal plan options.
+
+### Assigned Room Type
+```{r}
+assroomtype <- tapply(hotel_bookings$is_canceled, hotel_bookings$assigned_room_type, mean, na.rm = TRUE)
+barplot(sort(assroomtype), ylim = c(0,1), col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"))
+```
+<p>
+<p> Reservations that were assigned room "P" and "L" had a cancellation rate of almost 100%, while those assigned room "I" had a almost 0% cancellation rate. 
+
+### Reserved Room Type
+```{r}
+reservedroomtype <- tapply(hotel_bookings$is_canceled, hotel_bookings$reserved_room_type, mean, na.rm = TRUE)
+barplot(sort(reservedroomtype), ylim = c(0,1), col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"), xlab="Reserved Room Type", ylab="Cancellation Rate")
+
+```
+<p>
+<p> Reservations of the "P" room type are the most likely to be canceled, while reservations of the "E" room type are least likely to be canceled.
+
+### Is Repeated Guest
+```{r}
+repeatedguest <- tapply(hotel_bookings$is_canceled, hotel_bookings$is_repeated_guest, mean, na.rm = TRUE)
+barplot(sort(repeatedguest), ylim = c(0,1), col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"), names.arg = c("Yes", "No"), xlab="Are They A Repeated Guest?", ylab="Cancellation Rate")
+```
+<p> 
+<p> Repeated guests have a significantly lower cancellation rate than not repeated guests. One reason for this may be that the hotels and resorts have really great customer loyalty and customer service, which encourages guests to come back.
+
+### Lead Time
+```{r}
+ggplot(data=hotel_bookings, aes(x=is_canceled, y = lead_time, colour=is_canceled)) + geom_jitter(alpha = 0.25)
+```
+<p> 
+<p> Based on this jitter plot, we can see that there is a correlation between cancellation rate and lead time. It seems that as lead time to booking increases, the chance of cancellation also increases. This is depicted by the larger density of points in the 300-700 days for the canceled (1) bar versus the not-canceled (0) bar.
+
+### ADR
+```{r}
+adr1000 <- hotel_bookings[hotel_bookings$adr<1000,]
+ggplot(data=adr1000, aes(x=is_canceled, y = adr, colour=is_canceled)) + geom_jitter(alpha = 0.25)
+```
+<p>
+<p> Based on this jitter plot, we can not make any conclusions about the correlation between ADR and cancellation rate. 
+
+### Deposit Type
+```{r}
+deposittype <- tapply(hotel_bookings$is_canceled, hotel_bookings$deposit_type, mean, na.rm = TRUE)
+barplot(sort(deposittype), ylim = c(0,1), col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"))
+summary(hotel_bookings$deposit_type)
+```
+<p>
+<p> From the bar plot we can see that non-refund deposit types have almost a 100% cancellation rate, while refundable and non-refundable deposit types have close to 20% and 30% cancellation rate. The sample size for the non-refund category is not small either (14,000+), making this discovery somewhat surprising as we would expect lower cancellation rates for deposit types that are not refundable. This is an insight we can take into account when developing our deposit type strategy structure. 
+
+### Number of Special Requests
+```{r}
+#number of special requests
+aggregate(is_canceled ~ total_of_special_requests, data=hotel_bookings, mean)
+numofspecialreqs <- aggregate(is_canceled ~ total_of_special_requests, data=hotel_bookings, mean)
+barplot(numofspecialreqs$is_canceled, ylim = c(0,.5), names.arg = numofspecialreqs$total_of_special_requests,col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"))
+```
+<p>
+<p> Based on this barplot, we see that as number of special requests increase, the rate of cancellations decrease. This makes sense because as more and more special requests are made, it is less likely that they will cancel for another booking because they would have to re-set-up those special requests. Also, it could be explained by the fact that the customer becomes more invested as number of special requests increase. 
+
+### Relationships between Cancellations, Total Stay Length, and Number of Special Requests
+```{r}
+hotel_bookings$totalstaylength <- hotel_bookings$stays_in_week_nights + hotel_bookings$stays_in_weekend_nights
+ggplot(data=hotel_bookings, aes(x=totalstaylength, y=total_of_special_requests, colour=is_canceled)) + geom_point(size=2, alpha=.5) + geom_smooth(method = "lm") + geom_jitter()
+```
+<p>
+<p>From the graph above, there are two conclusions that can be made. First, shorter stays seem to be linked with more special requests. Second, longer stays seem to have more cancellations than shorter stays. Based on this information, medium length stays should be targeted as special requests are lower and there also tends to be less relative cancellations.
+
+
