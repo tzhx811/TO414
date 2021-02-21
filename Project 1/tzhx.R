@@ -34,7 +34,6 @@ top_n(agent_table, n=5, agent_cancel) %>% ggplot(., aes(x=agents, y=agent_cancel
 top_n(agent_table, n=-5, agent_cancel) %>% ggplot(., aes(x=agents, y=agent_cancel)) + geom_bar(stat='identity' ,fill="red")
 
 
-
 #look at frequency of top company
 group_by(hotel_data, company) %>% filter((n() >= 200) & (company != "NULL"))  %>% ggplot(aes(x=company)) + geom_bar()
 #find which ones generate the most revenue
