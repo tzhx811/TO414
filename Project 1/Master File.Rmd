@@ -1,7 +1,7 @@
 ---
 title: "Project 1: Hotel Bookings Data Exploration"
 author: "Yusuf Uzhunnan, Tony Zhao, Jenny Yu, Evan Jiang, Xincheng Yuan"
-date: "2/20/2021"
+date: "2/21/2021"
 output: 
   html_document:
     toc: true
@@ -222,7 +222,7 @@ barplot(sort(marketseg, decreasing = TRUE), ylim = c(0,1), legend = rownames(sor
 ### Customer Type
 ```{r}
 custtype <- tapply(hotel_bookings$is_canceled, hotel_bookings$customer_type, mean, na.rm = TRUE)
-barplot(sort(custtype), ylim = c(0,1), col=c("red","blue","green","pink"))
+barplot(sort(custtype), ylim = c(0,1), col=c("lavenderblush","pink","hotpink", "deeppink", "deeppink4"))
 ```
 <p>
 <p> From this barplot we can see which types of customers are more likely to cancel across all customer types. We can see that "group" customers have the lowest cancellation rate (around 10%) while "transient" customers have the highest (around 40%).
