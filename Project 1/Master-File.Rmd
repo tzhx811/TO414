@@ -418,5 +418,21 @@ Here, the agents with the highest average ADR are likely booking trips for more 
 
 ## Conclusions
 
+After our analysis, we have identified several interesting insights about hotel bookings and cancellation rates. The two hotels are not direct competitors because they have different customers and positions. Resort Hotel is more family-oriented, serving the visitors spending their vacation, while City Hotel serves business travelers more.
+Moving forward, if both Resort Hotel and City Hotel want to lower customer cancellation rates to secure a stable demand, it can focus on customer groups that are repeated guests, corporate customers, and direct bookings, which all have lower cancellation rates compared to their counterparts.
 
+In terms of market segment and distribution channels, the hotels should look into the undefined groups as they have an almost 100% cancellation rate. It also may be beneficial to look into why those that are assigned and reserved room type “P” cancel at almost a 100% rate as well. On top of this, customers in the transient category (short stays) had the highest cancellation rate at around 40%. This is expected as short stays tend to correlate with more unpredictable agendas. 
 
+We found that ADR is not a good indicator of cancellation rate, so a new pricing scheme or price adjustments should not be needed in order to decrease cancellations. 
+
+One unsurprising factor that we found was that guests with a higher number of previous cancellations seem to cancel at higher rates than guests with a lower number of previous cancellations. In addition, guests with the FB meal plan tend to have higher rates of cancellation compared to the other meal plans, so it’s worth looking into to see if there is an underlying reason for this trend.
+
+For lead time, we discovered that at greater lead times (300-700 days), the customer is more likely to cancel. From this and our jitter plot, we can say that as lead time decreases (customers book closer to their stay date) it is less likely that they will cancel. 
+
+One surprising insight that we found was related to cancellation rates and deposit types. We found that bookings that did not require deposits had a much lower cancellation rate than those that had a non-refundable deposit. The bookings that required non-refundable deposits actually had a almost 100% cancellation rate, while those bookings that did not require deposits had closer to a 30% cancellation rate. The hotels should look into which bookings require deposits and which ones don’t to further narrow down why those that require a non-refundable deposit have an extremely high cancellation rate. 
+
+One factor that we found had some level of correlation with cancellation rates was the total stay length. While shorter stays obviously still had cancellations, we found that canceling was more common among longer stays. On the flip side, shorter stays often brought pickier customers, as special requests tended to be higher for these stays. In order to minimize cancellations while also maximizing occupancy rates, hotels should try incentivizing medium length stays, as they tend to have lower special requests and cancellation rates.
+
+When looking at the companies and agents who book frequently and generate a lot of revenue, we identified several agents and companies who have a 100% cancellation rate, indicating that some form of preventative action might be needed. We also identified frequent bookers and which ones spend more lavishly, so targeted advertising might be in order to increase profits with those agents and companies.
+
+Overall, while we conducted our analysis with the assumption that cancellations were bad, cancellations could actually be beneficial if the right steps are taken. If the hotels require non-refundable deposits for bookings and then ultimately cancel, then that is added revenue towards the hotels. We can take the data that we collected to attach non-refundable deposits to those groups that have the highest rate of cancellations. The hotel can also utilize overbooking to maximize revenue generated and dampen the effects of cancellations. 
