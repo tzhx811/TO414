@@ -1,0 +1,92 @@
+---
+title: "Project 2"
+author: "Anthony Zhao"
+date: "3/15/2021"
+output: html_document
+---
+
+## R Markdown
+
+```{r}
+data <- read.csv("ProjectA_Listings2013.csv")
+
+linreg_data <- data
+#linreg_data$loan_status = NULL
+linreg_data$loan_status_description = NULL
+linreg_data$principal_balance = NULL
+linreg_data$prosper_rating = as.factor(linreg_data$prosper_rating)
+linreg_data$prosper_score = as.factor(linreg_data$prosper_score)
+linreg_data$listing_category_id = as.factor(linreg_data$listing_category_id)
+linreg_data$income_range = as.factor(linreg_data$income_range)
+linreg_data$income_range_description = NULL
+linreg_data$scorex = as.factor(linreg_data$scorex)
+linreg_data$income_verifiable = as.factor(linreg_data$income_verifiable)
+#linreg_data$employment_status_description = as.factor(linreg_data$employment_status_description)
+#linreg_data$occupation = as.factor(linreg_data$occupation)
+linreg_data$first_recorded_credit_line = NULL
+linreg_data$loan_origination_date = NULL
+#linreg_data$number_of_days = NULL
+linreg_data$is_homeowner = as.factor(linreg_data$is_homeowner)
+
+linreg_data$borrower_state = NULL
+linreg_data$borrower_city = NULL
+
+linreg_data <- na.omit(linreg_data)
+summary(linreg_data)
+
+
+linreg_data$employment_status_description[linreg_data$employment_status_description %in% c('Full-time', 'Employed', 'Part-time', 'Retired', 'Self-employed')] <- 'Employed'
+linreg_data$employment_status_description = as.factor(linreg_data$employment_status_description)
+
+
+linreg_data$occupation[linreg_data$occupation %in% c("Student - College Freshman" , "Student - College Graduate Student" , "Student - College Junior" , "Student - College Senior" , "Student - College Sophomore" , "Student - Community College" , "Student - Technical School")] <- 'Student'
+linreg_data$occupation = as.factor(linreg_data$occupation)
+
+
+linmod <- lm(borrower_rate ~.-delinquencies_over90_days-total_trade_items-now_delinquent_derog-satisfactory_accounts -was_delinquent_derog - delinquencies_over60_days - revolving_available_percent - real_estate_payment - revolving_balance - installment_balance - public_records_last12_months - delinquencies_last7_years -months_employed - real_estate_balance -amount_delinquent - dti_wprosper_loan - income_verifiable - income_range -listing_category_id -prosper_score-is_homeowner-total_open_revolving_accounts-public_records_last10_years-total_inquiries-loan_status, linreg_data)
+summary(linmod)
+
+
+
+
+##############################################################
+linreg_data <- data
+linreg_data$loan_status_description = NULL
+linreg_data$principal_balance = NULL
+linreg_data$prosper_rating = as.factor(linreg_data$prosper_rating)
+linreg_data$prosper_score = as.factor(linreg_data$prosper_score)
+linreg_data$listing_category_id = as.factor(linreg_data$listing_category_id)
+linreg_data$income_range = as.factor(linreg_data$income_range)
+linreg_data$income_range_description = NULL
+linreg_data$scorex = as.factor(linreg_data$scorex)
+linreg_data$income_verifiable = as.factor(linreg_data$income_verifiable)
+linreg_data$first_recorded_credit_line = NULL
+linreg_data$loan_origination_date = NULL
+#linreg_data$number_of_days = NULL
+linreg_data$is_homeowner = as.factor(linreg_data$is_homeowner)
+
+linreg_data$borrower_state = NULL
+linreg_data$borrower_city = NULL
+
+linreg_data <- na.omit(linreg_data)
+summary(linreg_data)
+
+
+linreg_data$employment_status_description[linreg_data$employment_status_description %in% c('Full-time', 'Employed', 'Part-time', 'Retired')] <- 'Employed'
+linreg_data$employment_status_description = as.factor(linreg_data$employment_status_description)
+
+
+linreg_data$occupation[linreg_data$occupation %in% c("Student - College Freshman" , "Student - College Graduate Student" , "Student - College Junior" , "Student - College Senior" , "Student - College Sophomore" , "Student - Community College" , "Student - Technical School")] <- 'Student'
+linreg_data$occupation = as.factor(linreg_data$occupation)
+
+
+
+
+linreg_data$loan_status[linreg_data$loan_status %in% c(1, 4)] <- 0
+linreg_data$loan_status[linreg_data$loan_status %in% c(2, 3)] <- 1
+
+
+logmod <- glm(loan_status ~. - amount_funded - listing_term - listing_monthly_payment - prosper_score - listing_category_id - delinquencies_over90_days - is_homeowner - delinquencies_over60_days - delinquencies_over30_days - was_delinquent_derog - now_delinquent_derog - satisfactory_accounts - total_trade_items - total_inquiries - revolving_available_percent - real_estate_payment - revolving_balance - real_estate_balance - installment_balance - total_open_revolving_accounts - open_credit_lines - current_credit_lines - amount_delinquent - credit_lines_last7_years- public_records_last10_years - current_delinquencies - monthly_debt - months_employed - dti_wprosper_loan - income_verifiable - stated_monthly_income - income_range - public_records_last12_months, family = "binomial", data = linreg_data, control = list(maxit = 50))
+summary(logmod)
+
+```
