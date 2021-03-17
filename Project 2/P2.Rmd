@@ -25,7 +25,7 @@ linreg_data$income_verifiable = as.factor(linreg_data$income_verifiable)
 #linreg_data$occupation = as.factor(linreg_data$occupation)
 linreg_data$first_recorded_credit_line = NULL
 linreg_data$loan_origination_date = NULL
-#linreg_data$number_of_days = NULL
+linreg_data$number_of_days = NULL
 linreg_data$is_homeowner = as.factor(linreg_data$is_homeowner)
 
 linreg_data$borrower_state = NULL
@@ -62,7 +62,7 @@ linreg_data$scorex = as.factor(linreg_data$scorex)
 linreg_data$income_verifiable = as.factor(linreg_data$income_verifiable)
 linreg_data$first_recorded_credit_line = NULL
 linreg_data$loan_origination_date = NULL
-#linreg_data$number_of_days = NULL
+linreg_data$number_of_days = NULL
 linreg_data$is_homeowner = as.factor(linreg_data$is_homeowner)
 
 linreg_data$borrower_state = NULL
@@ -81,12 +81,39 @@ linreg_data$occupation = as.factor(linreg_data$occupation)
 
 
 
-
 linreg_data$loan_status[linreg_data$loan_status %in% c(1, 4)] <- 0
 linreg_data$loan_status[linreg_data$loan_status %in% c(2, 3)] <- 1
 
+linereg_data_no1 <- linreg_data[linreg_data$loan_status %in% c(2,3,4),]
+linreg_data$loan_status[linreg_data$loan_status %in% c(4)] <- 0
+linreg_data$loan_status[linreg_data$loan_status %in% c(2, 3)] <- 1
 
-logmod <- glm(loan_status ~. - amount_funded - listing_term - listing_monthly_payment - prosper_score - listing_category_id - delinquencies_over90_days - is_homeowner - delinquencies_over60_days - delinquencies_over30_days - was_delinquent_derog - now_delinquent_derog - satisfactory_accounts - total_trade_items - total_inquiries - revolving_available_percent - real_estate_payment - revolving_balance - real_estate_balance - installment_balance - total_open_revolving_accounts - open_credit_lines - current_credit_lines - amount_delinquent - credit_lines_last7_years- public_records_last10_years - current_delinquencies - monthly_debt - months_employed - dti_wprosper_loan - income_verifiable - stated_monthly_income - income_range - public_records_last12_months, family = "binomial", data = linreg_data, control = list(maxit = 50))
+
+logmod <- glm(loan_status ~. , family = "binomial", data = linreg_data, control = list(maxit = 50))
 summary(logmod)
 
+set.seed(123)
+linreg_data_4test <- sample(1:nrow(linreg_data),7000)
+
+linreg_data_test<- linreg_data[linreg_data_4test,]
+linreg_data_train <- linreg_data[-linreg_data_4test,]
+
+linreg_data_train_labels2 <- linreg_data[-linreg_data_4test, "loan_status"]
+linreg_data_test_labels2 <- linreg_data[linreg_data_4test, "loan_status"]
+
+linreg_data_predict <- predict(logmod, newdata= linreg_data_test, type = "response")
+linreg_data_predict <- ifelse (linreg_data_predict > .5, 1,0 )
+
+library(class)
+library(gmodels)
+library(caret)
+library(lmtest)
+library(aod)
+library(VGAM)
+
+
+CrossTable(x=linreg_data_test_labels2, y=linreg_data_predict, prop.chisq = FALSE)
+
+sum(linreg_data$loan_status)
+sum(linreg_data_test$loan_status)
 ```
