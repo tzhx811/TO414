@@ -8,3 +8,34 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+
+```{r}
+data <- read.csv("ProjectA_Listings2013.csv")
+logreg_data <- data
+
+logreg_data$loan_status_description = NULL
+logreg_data$principal_balance = NULL
+logreg_data$prosper_rating = as.factor(logreg_data$prosper_rating)
+logreg_data$prosper_score = as.factor(logreg_data$prosper_score)
+logreg_data$listing_category_id = as.factor(logreg_data$listing_category_id)
+logreg_data$income_range = as.factor(logreg_data$income_range)
+logreg_data$income_range_description = NULL
+logreg_data$scorex = as.factor(logreg_data$scorex)
+logreg_data$income_verifiable = as.factor(logreg_data$income_verifiable)
+logreg_data$first_recorded_credit_line = NULL
+logreg_data$loan_origination_date = NULL
+logreg_data$number_of_days = NULL
+logreg_data$is_homeowner = as.factor(logreg_data$is_homeowner)
+logreg_data$borrower_state = NULL
+logreg_data$borrower_city = NULL
+logreg_data <- na.omit(logreg_data)
+
+logreg_data$employment_status_description[logreg_data$employment_status_description %in% c('Full-time', 'Employed', 'Part-time', 'Retired', 'Self-employed')] <- 'Employed'
+logreg_data$employment_status_description = as.factor(logreg_data$employment_status_description)
+
+
+linreg_data$occupation[linreg_data$occupation %in% c("Student - College Freshman" , "Student - College Graduate Student" , "Student - College Junior" , "Student - College Senior" , "Student - College Sophomore" , "Student - Community College" , "Student - Technical School")] <- 'Student'
+linreg_data$occupation = as.factor(linreg_data$occupation)
+```
+
