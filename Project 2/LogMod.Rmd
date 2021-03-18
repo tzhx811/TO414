@@ -9,10 +9,11 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
+# Importing and cleaning data
 ```{r}
 data <- read.csv("ProjectA_Listings2013.csv")
 logreg_data <- data
+library(gmodels)
 
 logreg_data$loan_status_description = NULL
 logreg_data$principal_balance = NULL
@@ -31,11 +32,46 @@ logreg_data$borrower_state = NULL
 logreg_data$borrower_city = NULL
 logreg_data <- na.omit(logreg_data)
 
-logreg_data$employment_status_description[logreg_data$employment_status_description %in% c('Full-time', 'Employed', 'Part-time', 'Retired', 'Self-employed')] <- 'Employed'
+logreg_data$employment_status_description[logreg_data$employment_status_description %in% c('Full-time', 'Employed', 'Part-time', 'Retired', 'Not employed')] <- 'Insignifiant_Employment_Status'
 logreg_data$employment_status_description = as.factor(logreg_data$employment_status_description)
 
 
-linreg_data$occupation[linreg_data$occupation %in% c("Student - College Freshman" , "Student - College Graduate Student" , "Student - College Junior" , "Student - College Senior" , "Student - College Sophomore" , "Student - Community College" , "Student - Technical School")] <- 'Student'
-linreg_data$occupation = as.factor(linreg_data$occupation)
+logreg_data$occupation[logreg_data$occupation %in% c("Student - College Freshman" , "Student - College Graduate Student" , "Student - College Junior" , "Student - College Senior" , "Student - College Sophomore" , "Student - Community College" , "Student - Technical School", "Biologist", "Bus Driver", "Clergy", "Clerical", "Construction", "Dentist", "Flight Attendant", "Food Service", "Food Service Management", "Homemaker", "Judge", "Laborer", "Landscaping", "Nurse's Aide", "Nurse (LPN)", "Nurse (RN)", "Pharmacist", "Pilot - Private/Commercial", "Postal Service", "Principal", "Psychologist", "Realtor", "Religious", "Sales - Retail", "Scientist", "Skilled Labor", "Social Worker", "Teacher's Aide", "Tradesman - Carpenter", "Tradesman - Electrician", "Truck Driver", "Waiter/Waitress", "Tradesman - Plumber", "", "Architect", "Car Dealer", "Doctor", "Teacher", "Military Enlisted", "Investor", "Tradesman - Mechanic", "Sales - Commission", "Professor", "Military Officer", "Medical Technician")] <- 'AAA_Insignificant_Occupation'
+logreg_data$occupation = as.factor(logreg_data$occupation)
+```
+
+# Defining Response Variable
+
+```{r}
+logreg_data234 <- logreg_data[logreg_data$loan_status %in% c(2,3,4),]
+logreg_data$loan_status[logreg_data$loan_status %in% c(4)] <- 0
+logreg_data$loan_status[logreg_data$loan_status %in% c(2, 3)] <- 1
+```
+
+# Spliting Data
+```{r}
+set.seed(123)
+logreg_data_sample <- sample(1:nrow(logreg_data),7000)
+
+logreg_data_test<- logreg_data[logreg_data_sample,]
+logreg_data_train <- logreg_data[-logreg_data_sample,]
+
+logreg_data_train_labels <- logreg_data[-logreg_data_sample, "loan_status"]
+logreg_data_test_labels <- logreg_data[logreg_data_sample, "loan_status"]
+
+
+```
+# Creating Log Mod
+```{r}
+logmod <- glm(loan_status ~ prosper_rating + borrower_rate + listing_term + employment_status_description + occupation  + lender_indicator + public_records_last12_months + total_open_revolving_accounts + revolving_available_percent + total_inquiries + delinquencies_over30_days +total_open_revolving_accounts*revolving_available_percent + amount_funded*borrower_rate + I(listing_term^2) +I(total_inquiries^2), family = "binomial", data = logreg_data, control = list(maxit = 50))
+summary(logmod)
+```
+
+# Cross Table
+```{r}
+logreg_data_predict <- predict(logmod, newdata= logreg_data_test, type = "response")
+logreg_data_predict <- ifelse (logreg_data_predict > .5, 1,0 )
+CrossTable(x=logreg_data_test_labels, y=logreg_data_predict, prop.chisq = FALSE)
+
 ```
 
