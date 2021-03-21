@@ -1,92 +1,188 @@
 ---
 title: "Project 2"
-author: "Anthony Zhao"
-date: "3/15/2021"
-output: html_document
+author: "Spry Sponges"
+date: "3/20/2021"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
 ---
 
-## R Markdown
+## Importing Data/Libraries and Cleaning Data
 
 ```{r}
 data <- read.csv("ProjectA_Listings2013.csv")
 
+#pre-processing for both linear regression and logarithmic regression
+#nullify future looking variables
+data$loan_status_description = NULL
+data$principal_balance = NULL
+data$number_of_days = NULL
+#factorize
+data$prosper_rating = as.factor(data$prosper_rating)
+data$prosper_score = as.factor(data$prosper_score)
+data$listing_category_id = as.factor(data$listing_category_id)
+data$income_range = as.factor(data$income_range)
+data$income_range_description = NULL
+data$scorex = as.factor(data$scorex)
+data$income_verifiable = as.factor(data$income_verifiable)
+data$is_homeowner = as.factor(data$is_homeowner)
+#not useful variables nullified
+data$first_recorded_credit_line = NULL
+data$loan_origination_date = NULL
+data$borrower_state = NULL
+data$borrower_city = NULL
+#omit the very few NA cases
+data <- na.omit(data)
+summary(data)
+```
+
+We want to factorize the elements that have categories, and then omit all the variables that we either can't use due to future looking or not very useful such as city and state.
+
+## Linear Regression Model
+
+We want to construct a linear regression model to predict the borrower rate using the other variables.
+
+```{r}
+#make copy of the data
 linreg_data <- data
-#linreg_data$loan_status = NULL
-linreg_data$loan_status_description = NULL
-linreg_data$principal_balance = NULL
-linreg_data$prosper_rating = as.factor(linreg_data$prosper_rating)
-linreg_data$prosper_score = as.factor(linreg_data$prosper_score)
-linreg_data$listing_category_id = as.factor(linreg_data$listing_category_id)
-linreg_data$income_range = as.factor(linreg_data$income_range)
-linreg_data$income_range_description = NULL
-linreg_data$scorex = as.factor(linreg_data$scorex)
-linreg_data$income_verifiable = as.factor(linreg_data$income_verifiable)
-#linreg_data$employment_status_description = as.factor(linreg_data$employment_status_description)
-#linreg_data$occupation = as.factor(linreg_data$occupation)
-linreg_data$first_recorded_credit_line = NULL
-linreg_data$loan_origination_date = NULL
-#linreg_data$number_of_days = NULL
-linreg_data$is_homeowner = as.factor(linreg_data$is_homeowner)
+#loan_status is future looking for borrower rate determination
+linreg_data$loan_status = NULL
 
-linreg_data$borrower_state = NULL
-linreg_data$borrower_city = NULL
-
-linreg_data <- na.omit(linreg_data)
-summary(linreg_data)
-
-
+#combine the employment status
 linreg_data$employment_status_description[linreg_data$employment_status_description %in% c('Full-time', 'Employed', 'Part-time', 'Retired', 'Self-employed')] <- 'Employed'
 linreg_data$employment_status_description = as.factor(linreg_data$employment_status_description)
 
-
+#combine students together
 linreg_data$occupation[linreg_data$occupation %in% c("Student - College Freshman" , "Student - College Graduate Student" , "Student - College Junior" , "Student - College Senior" , "Student - College Sophomore" , "Student - Community College" , "Student - Technical School")] <- 'Student'
 linreg_data$occupation = as.factor(linreg_data$occupation)
 
+#create the linear model
+linmod <- lm(borrower_rate ~ ., data = linreg_data)
+#remove the linear combination elements
+linmod <- lm(borrower_rate ~ . - delinquencies_over90_days - now_delinquent_derog - total_trade_items, data = linreg_data)
+#remove insignificant variables, starting first batch as those likely covered by other variables
+linmod <- lm(borrower_rate ~ . - delinquencies_over90_days - now_delinquent_derog - total_trade_items - prosper_score - listing_category_id - income_range - months_employed - revolving_balance - real_estate_balance - installment_balance, data = linreg_data)
+#remove all insignificant variables
+linmod <- lm(borrower_rate ~ . - delinquencies_over90_days - now_delinquent_derog - total_trade_items - prosper_score - listing_category_id - income_range - months_employed - revolving_balance - real_estate_balance - installment_balance - current_delinquencies - delinquencies_last7_years - credit_lines_last7_years - total_open_revolving_accounts - real_estate_payment - revolving_available_percent - satisfactory_accounts - was_delinquent_derog, data = linreg_data)
+#remove all insignificant variables again
+linmod <- lm(borrower_rate ~ . - delinquencies_over90_days - now_delinquent_derog - total_trade_items - prosper_score - listing_category_id - income_range - months_employed - revolving_balance - real_estate_balance - installment_balance - current_delinquencies - delinquencies_last7_years - credit_lines_last7_years - total_open_revolving_accounts - real_estate_payment - revolving_available_percent  - satisfactory_accounts - was_delinquent_derog - monthly_debt - public_records_last10_years - total_inquiries - is_homeowner, data = linreg_data)
+#remove all variables with p value greater than 0.05 and group the insignificant categories
+linreg_data$scorex[linreg_data$scorex %in% c('724-747', '748-777', '778+')] <- '< 600'
+linreg_data$occupation[linreg_data$occupation %in% c('Homemaker', 'Judge', 'Scientist')] <- ''
 
-linmod <- lm(borrower_rate ~.-delinquencies_over90_days-total_trade_items-now_delinquent_derog-satisfactory_accounts -was_delinquent_derog - delinquencies_over60_days - revolving_available_percent - real_estate_payment - revolving_balance - installment_balance - public_records_last12_months - delinquencies_last7_years -months_employed - real_estate_balance -amount_delinquent - dti_wprosper_loan - income_verifiable - income_range -listing_category_id -prosper_score-is_homeowner-total_open_revolving_accounts-public_records_last10_years-total_inquiries-loan_status, linreg_data)
+#final model
+linmod <- lm(borrower_rate ~ . - delinquencies_over90_days - now_delinquent_derog - total_trade_items - prosper_score - listing_category_id - income_range - months_employed - revolving_balance - real_estate_balance - installment_balance - current_delinquencies - delinquencies_last7_years - credit_lines_last7_years - total_open_revolving_accounts - real_estate_payment - revolving_available_percent  - satisfactory_accounts - was_delinquent_derog - monthly_debt - public_records_last10_years - total_inquiries - is_homeowner - public_records_last12_months, data = linreg_data)
+
 summary(linmod)
-
-
-
-
-##############################################################
-linreg_data <- data
-linreg_data$loan_status_description = NULL
-linreg_data$principal_balance = NULL
-linreg_data$prosper_rating = as.factor(linreg_data$prosper_rating)
-linreg_data$prosper_score = as.factor(linreg_data$prosper_score)
-linreg_data$listing_category_id = as.factor(linreg_data$listing_category_id)
-linreg_data$income_range = as.factor(linreg_data$income_range)
-linreg_data$income_range_description = NULL
-linreg_data$scorex = as.factor(linreg_data$scorex)
-linreg_data$income_verifiable = as.factor(linreg_data$income_verifiable)
-linreg_data$first_recorded_credit_line = NULL
-linreg_data$loan_origination_date = NULL
-#linreg_data$number_of_days = NULL
-linreg_data$is_homeowner = as.factor(linreg_data$is_homeowner)
-
-linreg_data$borrower_state = NULL
-linreg_data$borrower_city = NULL
-
-linreg_data <- na.omit(linreg_data)
-summary(linreg_data)
-
-
-linreg_data$employment_status_description[linreg_data$employment_status_description %in% c('Full-time', 'Employed', 'Part-time', 'Retired')] <- 'Employed'
-linreg_data$employment_status_description = as.factor(linreg_data$employment_status_description)
-
-
-linreg_data$occupation[linreg_data$occupation %in% c("Student - College Freshman" , "Student - College Graduate Student" , "Student - College Junior" , "Student - College Senior" , "Student - College Sophomore" , "Student - Community College" , "Student - Technical School")] <- 'Student'
-linreg_data$occupation = as.factor(linreg_data$occupation)
-
-
-
-
-linreg_data$loan_status[linreg_data$loan_status %in% c(1, 4)] <- 0
-linreg_data$loan_status[linreg_data$loan_status %in% c(2, 3)] <- 1
-
-
-logmod <- glm(loan_status ~. - amount_funded - listing_term - listing_monthly_payment - prosper_score - listing_category_id - delinquencies_over90_days - is_homeowner - delinquencies_over60_days - delinquencies_over30_days - was_delinquent_derog - now_delinquent_derog - satisfactory_accounts - total_trade_items - total_inquiries - revolving_available_percent - real_estate_payment - revolving_balance - real_estate_balance - installment_balance - total_open_revolving_accounts - open_credit_lines - current_credit_lines - amount_delinquent - credit_lines_last7_years- public_records_last10_years - current_delinquencies - monthly_debt - months_employed - dti_wprosper_loan - income_verifiable - stated_monthly_income - income_range - public_records_last12_months, family = "binomial", data = linreg_data, control = list(maxit = 50))
-summary(logmod)
-
 ```
+
+By iterating through the model starting with all the variables and eliminating those which are redundant, insignificant, and combining factor levels that are insignificant, we get a linear model to predict borrower rate with only significant variables.
+
+## Results of Linear Model
+From the linear model, we see that the R-squared is 0.9451, which is very high and indicative that our model indeed does explain most of the variance in the borrower rate. The model indeed is able to predict the borrower rate with high accuracy.
+
+The model suggests that the base value for the borrower rate is 8.079%. As prosper rating is better, the rate is lower. Longer term and higher payments both increase the borrower rate, and higher income lowers the rate. Having a verifiable income actually increased the rate, and being unemployed or other employment increased the rate. Higher dti_wprosper_loan also increases the rate very slightly, along with more delinquent amounts, inquiries in last 6 months, current credit lines, bankcard utilization, and delinquencies over 30 days. Being a lendor, having more open credit lines, and more delinquencies over 60 days somehow decreases the rate. All occupations increase the rate, some more than others, and the scorex has a distribution where the highest increase to borrower rate is 665-689, and it tapers off to the ends.
+
+## Logistic Model
+
+We now want to create a logistic model to predict whether a loan defaults to determine if the variables that are considered risks in determining borrower rate truly are risks.
+
+```{r}
+logreg_data <- data
+
+logreg_data$employment_status_description[logreg_data$employment_status_description %in% c('Full-time', 'Employed', 'Part-time', 'Retired', 'Not employed')] <- 'Insignifiant_Employment_Status'
+logreg_data$employment_status_description = as.factor(logreg_data$employment_status_description)
+
+
+logreg_data$occupation[logreg_data$occupation %in% c("Student - College Freshman" , "Student - College Graduate Student" , "Student - College Junior" , "Student - College Senior" , "Student - College Sophomore" , "Student - Community College" , "Student - Technical School", "Biologist", "Bus Driver", "Clergy", "Clerical", "Construction", "Dentist", "Flight Attendant", "Food Service", "Food Service Management", "Homemaker", "Judge", "Laborer", "Landscaping", "Nurse's Aide", "Nurse (LPN)", "Nurse (RN)", "Pharmacist", "Pilot - Private/Commercial", "Postal Service", "Principal", "Psychologist", "Realtor", "Religious", "Sales - Retail", "Scientist", "Skilled Labor", "Social Worker", "Teacher's Aide", "Tradesman - Carpenter", "Tradesman - Electrician", "Truck Driver", "Waiter/Waitress", "Tradesman - Plumber", "", "Architect", "Car Dealer", "Doctor", "Teacher", "Military Enlisted", "Investor", "Tradesman - Mechanic", "Sales - Commission", "Professor", "Military Officer", "Medical Technician")] <- 'AAA_Insignificant_Occupation'
+logreg_data$occupation = as.factor(logreg_data$occupation)
+
+#define response variable (don't use current loans)
+logreg_data234 <- logreg_data[logreg_data$loan_status %in% c(2,3,4),]
+logreg_data$loan_status[logreg_data$loan_status %in% c(4)] <- 0
+logreg_data$loan_status[logreg_data$loan_status %in% c(2, 3)] <- 1
+```
+
+To test the effectiveness of our model, we want to create a train and test split.
+
+```{r}
+#create the test and train splits
+set.seed(123)
+logreg_data_sample <- sample(1:nrow(logreg_data),7000)
+
+logreg_data_test<- logreg_data[logreg_data_sample,]
+logreg_data_train <- logreg_data[-logreg_data_sample,]
+
+logreg_data_train_labels <- logreg_data[-logreg_data_sample, "loan_status"]
+logreg_data_test_labels <- logreg_data[logreg_data_sample, "loan_status"]
+
+
+#create the model, removing the insignificant variables
+logmod <- glm(loan_status ~ prosper_rating + borrower_rate + listing_term + employment_status_description + occupation  + lender_indicator + public_records_last12_months + total_open_revolving_accounts + revolving_available_percent + total_inquiries + delinquencies_over30_days + total_open_revolving_accounts*revolving_available_percent + amount_funded*borrower_rate + I(listing_term^2) + I(total_inquiries^2), family = "binomial", data = logreg_data, control = list(maxit = 50))
+
+summary(logmod)
+```
+
+Based on this logistic regression model, the variables that increase the log-odds ratio of defaulting are: prosper_ratings B-HR, listing_term, employment_status_description, public_records_last12_months, total_open_revolving_accounts, delinquencies_over30_days, amount_funded, and I(total_inquiries^2). The other variables decrease the log-odds ratio of defaulting.
+
+### Cross Table for Logistic Regression Model
+```{r}
+logreg_data_predict <- predict(logmod, newdata= logreg_data_test, type = "response")
+logreg_data_predict <- ifelse (logreg_data_predict > .5, 1,0 )
+library(gmodels)
+CrossTable(x=logreg_data_test_labels, y=logreg_data_predict, prop.chisq = FALSE)
+```
+
+### Calculations for Cross Table
+```{r}
+#Accuracy
+LogRegAcc <- (861+3556)/7000
+round(LogRegAcc,3)
+
+#Error Rate
+LogRegErr <- 1-LogRegAcc
+round(LogRegErr,3)
+```
+
+Based on the cross table created from our logistic regression model, our model is 63.1% accurate. This leaves an error rate of 36.9% in our model. 
+
+```{r}
+#Sensitivity
+LogRegSens <- 3556/(586+3556)
+round(LogRegSens,3)
+
+#Specificity
+LogRegSpec <- 861/(861+1997)
+round(LogRegSpec,3)
+```
+
+Our model had a sensitivity value of 85.9%, meaning that in cases when it is actually yes, the model predicts yes 85.9% of the time. However, our model also had a specificity value of 30.1%, meaning that in cases when it is actually no, the model is 30.1% accurate in predicting these no(s).
+
+```{r}
+#Precision
+LogRegPrec <- 3556/(1997+3556)
+round(LogRegPrec,3)
+```
+
+In terms of precision, our model had a value of 64%, meaning that when it is yes, it is correct 64% of the time.
+
+```{r}
+#KappaStat
+LogRegObs <- 861+3556
+LogRegExp <- (((861+1997)*(861+586))+((586+3556)*(1997+3556)))/(7000)
+LogRegKappa <- (LogRegObs-LogRegExp)/((7000)-LogRegExp)
+round(LogRegKappa,3)
+```
+
+Our Kappa Statistic is 17.3% for our model, meaning that it performed 17.3% better than if it was just random guessing.
+
+## Conclusions about Arbitrage
+We want to identify incongruencies between the logistic model and linear model, since a higher borrower rate should only be associated with a higher chance of defaulting.
+
+The linear model suggests that having higher monthly payments is a risk, but the logistic model didn't find it to be significant in predicting default odds. The logistic model also found more inquiries to lower the odds of defaulting, whereas the linear model suggested more inquiries to be a risk. The linear model also considers more bankcard utilizations and credit lines to be a risk, but that is not a useful indicator of defaulting, although it may be a factor for a bank to consider outside of default risk costs. 
+
+The occupations all increased borrower rate in the linear model, but in the logistic model only some occupations increased the odds of default. This suggests that the borrower rate can be more fine-grain with respect to occupation.
+
+While there were many similar variables in both models that indicated higher default rate and thus higher borrower rate, there certainly are variables that raise borrower rate without raising chances of default and vice versa. To obtain arbitrage, there would need to be more analysis into what other factors besides default risk go into an interest rate determination, since we have only analyzed default rate but not the effect of interest rates or treasury rates for example. Based on this analysis however, it seems that credit lines, inquiries, payment amounts, and occupation type can be used for arbitrage.

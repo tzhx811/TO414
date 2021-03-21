@@ -1,0 +1,125 @@
+---
+title: "LogMod"
+author: "Spry Sponges"
+date: "3/17/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Importing Data/Libraries and Cleaning Data
+```{r}
+data <- read.csv("ProjectA_Listings2013.csv")
+logreg_data <- data
+library(gmodels)
+
+logreg_data$loan_status_description = NULL
+logreg_data$principal_balance = NULL
+logreg_data$prosper_rating = as.factor(logreg_data$prosper_rating)
+logreg_data$prosper_score = as.factor(logreg_data$prosper_score)
+logreg_data$listing_category_id = as.factor(logreg_data$listing_category_id)
+logreg_data$income_range = as.factor(logreg_data$income_range)
+logreg_data$income_range_description = NULL
+logreg_data$scorex = as.factor(logreg_data$scorex)
+logreg_data$income_verifiable = as.factor(logreg_data$income_verifiable)
+logreg_data$first_recorded_credit_line = NULL
+logreg_data$loan_origination_date = NULL
+logreg_data$number_of_days = NULL
+logreg_data$is_homeowner = as.factor(logreg_data$is_homeowner)
+logreg_data$borrower_state = NULL
+logreg_data$borrower_city = NULL
+logreg_data <- na.omit(logreg_data)
+
+logreg_data$employment_status_description[logreg_data$employment_status_description %in% c('Full-time', 'Employed', 'Part-time', 'Retired', 'Not employed')] <- 'Insignifiant_Employment_Status'
+logreg_data$employment_status_description = as.factor(logreg_data$employment_status_description)
+
+
+logreg_data$occupation[logreg_data$occupation %in% c("Student - College Freshman" , "Student - College Graduate Student" , "Student - College Junior" , "Student - College Senior" , "Student - College Sophomore" , "Student - Community College" , "Student - Technical School", "Biologist", "Bus Driver", "Clergy", "Clerical", "Construction", "Dentist", "Flight Attendant", "Food Service", "Food Service Management", "Homemaker", "Judge", "Laborer", "Landscaping", "Nurse's Aide", "Nurse (LPN)", "Nurse (RN)", "Pharmacist", "Pilot - Private/Commercial", "Postal Service", "Principal", "Psychologist", "Realtor", "Religious", "Sales - Retail", "Scientist", "Skilled Labor", "Social Worker", "Teacher's Aide", "Tradesman - Carpenter", "Tradesman - Electrician", "Truck Driver", "Waiter/Waitress", "Tradesman - Plumber", "", "Architect", "Car Dealer", "Doctor", "Teacher", "Military Enlisted", "Investor", "Tradesman - Mechanic", "Sales - Commission", "Professor", "Military Officer", "Medical Technician")] <- 'AAA_Insignificant_Occupation'
+logreg_data$occupation = as.factor(logreg_data$occupation)
+```
+
+# Defining Response Variable
+```{r}
+logreg_data234 <- logreg_data[logreg_data$loan_status %in% c(2,3,4),]
+logreg_data$loan_status[logreg_data$loan_status %in% c(4)] <- 0
+logreg_data$loan_status[logreg_data$loan_status %in% c(2, 3)] <- 1
+```
+
+# Creating Test and Train Data
+```{r}
+set.seed(123)
+logreg_data_sample <- sample(1:nrow(logreg_data),7000)
+
+logreg_data_test<- logreg_data[logreg_data_sample,]
+logreg_data_train <- logreg_data[-logreg_data_sample,]
+
+logreg_data_train_labels <- logreg_data[-logreg_data_sample, "loan_status"]
+logreg_data_test_labels <- logreg_data[logreg_data_sample, "loan_status"]
+
+
+```
+
+# Creating Logistic Regression Model
+```{r}
+logmod <- glm(loan_status ~ prosper_rating + borrower_rate + listing_term + employment_status_description + occupation  + lender_indicator + public_records_last12_months + total_open_revolving_accounts + revolving_available_percent + total_inquiries + delinquencies_over30_days +total_open_revolving_accounts*revolving_available_percent + amount_funded*borrower_rate + I(listing_term^2) +I(total_inquiries^2), family = "binomial", data = logreg_data, control = list(maxit = 50))
+summary(logmod)
+```
+Based on this logistic regression model, the variables that increase the log-odds ratio of defaulting are: prosper_ratings B-HR, listing_term, employment_status_description, public_records_last12_months, total_open_revolving_accounts, delinquencies_over30_days, amount_funded, and I(total_inquiries^2). The other variables decrease the log-odds ratio of defaulting.
+
+
+
+
+# Cross Table for Logistic Regression Model
+```{r}
+logreg_data_predict <- predict(logmod, newdata= logreg_data_test, type = "response")
+logreg_data_predict <- ifelse (logreg_data_predict > .5, 1,0 )
+CrossTable(x=logreg_data_test_labels, y=logreg_data_predict, prop.chisq = FALSE)
+
+```
+
+# Calculations for Cross Table
+```{r}
+#Accuracy
+LogRegAcc <- (861+3556)/7000
+round(LogRegAcc,3)
+
+#Error Rate
+LogRegErr <- 1-LogRegAcc
+round(LogRegErr,3)
+```
+Based on the cross table created from our logistic regression model, our model is 63.1% accurate. This leaves an error rate of 36.9% in our model. 
+
+```{r}
+#Sensitivity
+LogRegSens <- 3556/(586+3556)
+round(LogRegSens,3)
+
+#Specificity
+LogRegSpec <- 861/(861+1997)
+round(LogRegSpec,3)
+```
+Our model had a sensitivity value of 85.9%, meaning that in cases when it is actually yes, the model predicts yes 85.9% of the time. However, our model also had a specificity value of 30.1%, meaning that in cases when it is actually no, the model is 30.1% accurate in predicting these no(s).
+```{r}
+#Precision
+LogRegPrec <- 3556/(1997+3556)
+round(LogRegPrec,3)
+```
+In terms of precision, our model had a value of 64%, meaning that when it is yes, it is correct 64% of the time.
+```{r}
+#KappaStat
+LogRegObs <- 861+3556
+LogRegExp <- (((861+1997)*(861+586))+((586+3556)*(1997+3556)))/(7000)
+LogRegKappa <- (LogRegObs-LogRegExp)/((7000)-LogRegExp)
+round(LogRegKappa,3)
+```
+Our Kappa Statistic is 17.3% for our model, meaning that it performed 17.3% better than if it was just random guessing.
+
+
+
+
+
+
+
+
