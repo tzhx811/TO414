@@ -38,6 +38,8 @@ summary(logit.model)
 
 logit.model2 <- glm(stroke ~ +age +hypertension +avg_glucose_level +heart_disease1, data = stroke_norm, family = "binomial")
 summary(logit.model2)
+
+
 ```
 
 
