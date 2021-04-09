@@ -1,6 +1,6 @@
 ---
 title: "Project 2"
-author: "Spry Sponges"
+author: "Spry Sponges: Evan Jiang, Jenny Yu, Tony Zhao, Xincheng Yuan, Yusuf Uzhunnan"
 date: "3/20/2021"
 output:
   html_document:
