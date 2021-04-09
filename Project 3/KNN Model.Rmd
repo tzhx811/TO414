@@ -9,22 +9,51 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+stroke <- read.csv("healthcare-dataset-stroke-data.csv")
+stroke <- stroke[stroke$gender != "Other",]
+stroke$id <- NULL
+stroke$gender <- as.factor(stroke$gender)
+stroke$work_type <- as.factor(stroke$work_type)
+stroke$smoking_status <- as.factor(stroke$smoking_status)
+stroke$ever_married <- as.factor(stroke$ever_married)
+stroke$Residence_type <- as.factor(stroke$Residence_type)
+stroke$heart_disease <- as.factor(stroke$heart_disease)
+stroke$bmi <- as.numeric(stroke$bmi)
 ```
 
-## Including Plots
+```{r}
+summary(stroke)
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+strokemm <- as.data.frame(model.matrix(~.-1,stroke))
+stroke_norm <- as.data.frame(lapply(strokemm, normalize))
+summary(stroke_norm)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+##KNN Model
+```{r}
+set.seed(12345)
+testrows_knn <- sample(1:nrow(stroke_norm), 1200) 
+stroketrain_knn <- stroke_norm[-testrows_knn, ]
+stroketest_knn <- stroke_norm[testrows_knn, ]
+
+knn_train_labels <- stroke_norm[-testrows_knn, "stroke"]
+knn_test_labels <- stroke_norm[testrows_knn, "stroke"]
+```
+
+```{r}
+library(class)
+library(caret)
+stroke_knn_test_pred <- knn(train = stroketrain_knn, test = stroketest_knn,
+                      cl = knn_train_labels, k=sqrt(nrow(stroketrain_knn)))
+```
+
+```{r}
+summary(stroke_knn_test_pred)
+library(gmodels)
+CrossTable(x = knn_test_labels, y = stroke_knn_test_pred, 
+           prop.chisq=FALSE)
+```
