@@ -1,0 +1,65 @@
+---
+title: "StrokeDataJY"
+author: "Jenny Yu"
+date: "4/8/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load and Clean Data
+```{r}
+stroke <- read.csv("healthcare-dataset-stroke-data.csv")
+stroke <- stroke[stroke$gender != "Other",]
+stroke$id <- NULL
+stroke$gender <- as.factor(stroke$gender)
+stroke$work_type <- as.factor(stroke$work_type)
+stroke$smoking_status <- as.factor(stroke$smoking_status)
+stroke$ever_married <- as.factor(stroke$ever_married)
+stroke$Residence_type <- as.factor(stroke$Residence_type)
+stroke$heart_disease <- as.factor(stroke$heart_disease)
+stroke$bmi <- as.numeric(stroke$bmi)
+
+summary(stroke)
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+
+strokemm <- as.data.frame(model.matrix(~.-1,stroke))
+stroke_norm <- as.data.frame(lapply(strokemm, normalize))
+summary(stroke_norm)
+```
+
+## Decision Tree
+```{r}
+library(C50)
+
+set.seed(12345)
+#25% ish in test, all others in train, for this choose round numbers - 1280 random in test, others in train
+testrows <- sample(1:nrow(stroke),1280)
+stroketrain <- stroke[-testrows, ]
+stroketest <- stroke[testrows, ]
+
+#build decision tree
+
+stroke_dt <- C5.0(as.factor(stroke) ~ ., data = stroketrain)
+
+plot(stroke_dt)
+summary(stroke_dt)
+
+#predict the test data
+stroke_dt_pred <- predict(stroke_dt, stroketest)
+library(gmodels)
+CrossTable(stroketest$stroke, stroke_dt_pred)
+
+# Confusion Matrix and Kappa Statistics
+
+library(caret)
+library(class)
+
+
+confusionMatrix(stroke_dt_pred, as.factor(stroketest$stroke))
+```
+
