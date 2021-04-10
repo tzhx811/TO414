@@ -1,0 +1,79 @@
+---
+title: "Data Visualization"
+author: "Anthony Zhao"
+date: "4/9/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Import Data
+
+```{r}
+stroke <- read.csv("healthcare-dataset-stroke-data.csv")
+stroke <- stroke[stroke$gender != "Other",]
+stroke$id <- NULL
+stroke$gender <- as.factor(stroke$gender)
+stroke$work_type <- as.factor(stroke$work_type)
+stroke$smoking_status <- as.factor(stroke$smoking_status)
+stroke$ever_married <- as.factor(stroke$ever_married)
+stroke$Residence_type <- as.factor(stroke$Residence_type)
+stroke$bmi <- as.numeric(stroke$bmi)
+summary(stroke)
+```
+
+## Process Data
+
+```{r}
+# create the bmi data that doesn't have NA
+bmi_data <- stroke[!is.na(stroke$bmi),]
+# can't use stroke to predict bmi
+bmi_model <- lm(bmi ~ .-stroke, data = bmi_data)
+summary(bmi_model)
+# remove insignificant variables
+bmi_model <- lm(bmi ~ .-stroke-gender-Residence_type+age*hypertension*ever_married-heart_disease, data = bmi_data)
+summary(bmi_model)
+
+stroke$bmi[is.na(stroke$bmi)] = predict(bmi_model, stroke[is.na(stroke$bmi),])
+
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+
+strokemm <- as.data.frame(model.matrix(~.-1,stroke))
+stroke_norm <- as.data.frame(lapply(strokemm, normalize))
+summary(stroke_norm)
+```
+
+## Visualizations
+```{r}
+par(mfrow=c(2,2))
+barplot(prop.table(table(stroke$stroke, stroke$gender), 2), main="Gender vs Stroke", xlab="Gender", col=c("darkblue","red"))
+barplot(prop.table(table(stroke$stroke, stroke$hypertension), 2), main="Hypertension vs Stroke", xlab="Hypertension", col=c("darkblue","red"))
+barplot(prop.table(table(stroke$stroke, stroke$heart_disease), 2), main="Heart Disease vs Stroke", xlab="Heart Disease", col=c("darkblue","red"))
+barplot(prop.table(table(stroke$stroke, stroke$ever_married), 2), main="Marriage vs Stroke", xlab="Marriage", col=c("darkblue","red"))
+par(mfrow=c(2,2))
+barplot(prop.table(table(stroke$stroke, stroke$work_type), 2), main="Work vs Stroke", xlab="Work", col=c("darkblue","red"))
+barplot(prop.table(table(stroke$stroke, stroke$Residence_type), 2), main="Residence vs Stroke", xlab="Residence Type", col=c("darkblue","red"))
+barplot(prop.table(table(stroke$stroke, stroke$smoking_status), 2), main="Smoker vs Stroke", xlab="Smoking Status", col=c("darkblue","red"))
+library(lsr)
+barplot(prop.table(table(stroke$stroke, quantileCut(stroke$age, 10)), 2), main="Age vs Stroke", xlab="Age", col=c("darkblue","red"))
+par(mfrow=c(2,2))
+barplot(prop.table(table(stroke$stroke, quantileCut(stroke$bmi, 10)), 2), main="BMI vs Stroke", xlab="BMI", col=c("darkblue","red"))
+barplot(prop.table(table(stroke$stroke, quantileCut(stroke$avg_glucose_level, 10)), 2), main="Glucose vs Stroke", xlab="Glucose Level", col=c("darkblue","red"))
+```
+
+## Inter-Variable
+```{r}
+prop.table(table(stroke$ever_married, stroke$hypertension), 1)
+prop.table(table(stroke$ever_married, stroke$heart_disease), 1)
+prop.table(table(stroke$hypertension, stroke$heart_disease), 1)
+par(mfrow=c(2,2))
+barplot(prop.table(table(stroke$ever_married, quantileCut(stroke$age, 10)), 2), main="Age vs Marriage", xlab="Age", col=c("darkblue","red"))
+barplot(prop.table(table(stroke$hypertension, quantileCut(stroke$age, 10)), 2), main="Age vs Hypertension", xlab="Age", col=c("darkblue","red"))
+barplot(prop.table(table(stroke$heart_disease, quantileCut(stroke$age, 10)), 2), main="Age vs Heart Disease", xlab="Age", col=c("darkblue","red"))
+```
+
+Although it seemed liked marriage, hypertension, and heart disease all lead to higher chances of stroke, age clearly has a very large impact on these three variables.
