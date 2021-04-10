@@ -74,6 +74,14 @@ par(mfrow=c(2,2))
 barplot(prop.table(table(stroke$ever_married, quantileCut(stroke$age, 10)), 2), main="Age vs Marriage", xlab="Age", col=c("darkblue","red"))
 barplot(prop.table(table(stroke$hypertension, quantileCut(stroke$age, 10)), 2), main="Age vs Hypertension", xlab="Age", col=c("darkblue","red"))
 barplot(prop.table(table(stroke$heart_disease, quantileCut(stroke$age, 10)), 2), main="Age vs Heart Disease", xlab="Age", col=c("darkblue","red"))
+par(mfrow=c(2,2))
+barplot(prop.table(table(stroke$heart_disease[stroke$ever_married=="Yes"], cut(stroke$age[stroke$ever_married=="Yes"], breaks = c(0,10,20,30,40,50,60,70,80,90))), 2), main="Age vs Heart Disease for Married", xlab="Age", col=c("darkblue","red"))
+barplot(prop.table(table(stroke$heart_disease[stroke$ever_married=="No"], cut(stroke$age[stroke$ever_married=="No"], breaks = c(0,10,20,30,40,50,60,70,80,90))), 2), main="Age vs Heart Disease for Unmarried", xlab="Age", col=c("darkblue","red"))
+barplot(prop.table(table(stroke$hypertension[stroke$ever_married=="Yes"], cut(stroke$age[stroke$ever_married=="Yes"], breaks = c(0,10,20,30,40,50,60,70,80,90))), 2), main="Age vs Hypertension for Married", xlab="Age", col=c("darkblue","red"))
+barplot(prop.table(table(stroke$hypertension[stroke$ever_married=="No"], cut(stroke$age[stroke$ever_married=="No"], breaks = c(0,10,20,30,40,50,60,70,80,90))), 2), main="Age vs Hypertension for Unmarried", xlab="Age", col=c("darkblue","red"))
+
 ```
 
 Although it seemed liked marriage, hypertension, and heart disease all lead to higher chances of stroke, age clearly has a very large impact on these three variables.
+
+When we split up based on marriage and age, we can see people of each age group are not much more prone to heart disease or hypertension due to marriage.
