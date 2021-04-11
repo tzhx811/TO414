@@ -65,4 +65,50 @@ library(class)
 confusionMatrix(stroke_dt_pred, as.factor(stroketest$stroke))
 ```
 
+## Decision Trees Based On Age and BMI
+```{r}
+#separate data set for further insights
+ageYoung <- stroketrain[stroketrain$age <= 55,]
+ageOld <- stroketrain[stroketrain$age > 55,]
+bmiRisk <- stroketrain[stroketrain$bmi > 26.5 && stroketrain$bmi < 32,]
+bmiNotRisk <- stroketrain[stroketrain$bmi <= 26.5 || stroketrain$bmi >= 32,]
+
+ageYoungtest <- stroketest[stroketest$age <= 55,]
+ageOldtest <- stroketest[stroketest$age > 55,]
+bmiRisktest <- stroketest[stroketest$bmi > 26.5 && stroketest$bmi < 32,]
+bmiNotRisktest <- stroketest[stroketest$bmi <= 26.5 || stroketest$bmi >= 32,]
+
+#Young Patients
+#rebalance errors - want to prioritize minimizing false negatives, if people are at risk of stroke we want to know
+error_cost2 <- matrix(c(0, 1, 15, 0), nrow = 2)
+
+ageYoung_dt <- C5.0(as.factor(stroke) ~ ., data = ageYoung, costs = error_cost2)
+plot(ageYoung_dt)
+summary(ageYoung_dt)
+
+#predict the test data
+ageYoung_dt_pred <- predict(ageYoung_dt, ageYoungtest)
+
+CrossTable(ageYoungtest$stroke, ageYoung_dt_pred)
+
+# Confusion Matrix and Kappa Statistics
+confusionMatrix(ageYoung_dt_pred, as.factor(ageYoungtest$stroke))
+
+#Old Patients
+#rebalance errors - want to prioritize minimizing false negatives, if people are at risk of stroke we want to know
+error_cost3 <- matrix(c(0, 1, 10, 0), nrow = 2)
+
+ageOld_dt <- C5.0(as.factor(stroke) ~ ., data = ageOld, costs = error_cost3)
+plot(ageOld_dt)
+summary(ageOld_dt)
+
+#predict the test data
+ageOld_dt_pred <- predict(ageOld_dt, ageOldtest)
+
+CrossTable(ageOldtest$stroke, ageOld_dt_pred)
+
+# Confusion Matrix and Kappa Statistics
+confusionMatrix(ageOld_dt_pred, as.factor(ageOldtest$stroke))
+
+```
 
