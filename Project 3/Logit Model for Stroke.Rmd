@@ -1,7 +1,7 @@
 ---
 title: "Logit Model"
 author: "Evan Jiang"
-date: "4/7/2021"
+date: "4/11/2021"
 output: html_document
 ---
 
@@ -78,16 +78,17 @@ confusionMatrix(data = as.factor(LogReg_Pred), reference = as.factor(stroketestL
 
 
 #With Error Cost?
-error_cost <- matrix(c(0,1,5,0), nrow = 2)
-logit_finalCost <- glm(stroke ~ +age +avg_glucose_level  +work_typeSelf.employed +avg_glucose_level , data = stroketrainLOG, 
-                       costs = error_cost, family = "binomial")
-summary(logit_finalCost)
+
+
+#error_cost <- matrix(c(0,1,5,0), nrow = 2)
+#logit_finalCost <- glm(stroke ~ +age +avg_glucose_level  +work_typeSelf.employed +avg_glucose_level , data = stroketrainLOG, costs = error_cost, family = "binomial")
+#summary(logit_finalCost)
 
 
 
-LogCostPredict <- predict(logit_finalCost, stroketrainLOG)
-CrossTable(x = stroketestLOG$stroke, y = LogCostPredict, prop.chisq=FALSE)
-confusionMatrix(data = as.factor(LogCostPredict), reference = as.factor(stroketestLOG$stroke)
+#LogCostPredict <- predict(logit_finalCost, stroketrainLOG)
+#CrossTable(x = stroketestLOG$stroke, y = LogCostPredict, prop.chisq=FALSE)
+#confusionMatrix(data = as.factor(LogCostPredict), reference = as.factor(stroketestLOG$stroke)
 
 
 
