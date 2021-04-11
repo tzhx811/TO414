@@ -23,17 +23,7 @@ stroke$Residence_type <- as.factor(stroke$Residence_type)
 stroke$heart_disease <- as.factor(stroke$heart_disease)
 stroke$bmi <- as.numeric(stroke$bmi)
 
-summary(stroke)
-normalize <- function(x) {
-  return ((x - min(x)) / (max(x) - min(x)))
-}
 
-strokemm <- as.data.frame(model.matrix(~.-1,stroke))
-stroke_norm <- as.data.frame(lapply(strokemm, normalize))
-summary(stroke_norm)
-```
-## Adding BMI Predictions
-```{r}
 # create the bmi data that doesn't have NA
 bmi_data <- stroke[!is.na(stroke$bmi),]
 # can't use stroke to predict bmi
@@ -45,14 +35,42 @@ summary(bmi_model)
 
 stroke$bmi[is.na(stroke$bmi)] = predict(bmi_model, stroke[is.na(stroke$bmi),])
 
-str
+
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+
+strokemm <- as.data.frame(model.matrix(~.-1,stroke))
+stroke_norm <- as.data.frame(lapply(strokemm, normalize))
 ```
+## Create test and train split
+```{r}
+set.seed(12345)
+#25% ish in test, all others in train, for this choose round numbers - 1280 random in test, others in train
+testrows <- sample(1:nrow(stroke_norm),1280)
+stroketrainLOG <- stroke[-testrows, ]
+stroketestLOG <- stroke[testrows, ]
+```
+
+
 ## Logit Model 
 ```{r}
-logit.model <- glm(stroke ~ ., data = stroke, family = "binomial")
+logit.model <- glm(stroke ~ ., data = stroketrainLOG, family = "binomial")
 summary(logit.model)
 
-logit.model2 <- glm(stroke ~ +age +hypertension +avg_glucose_level, data = stroke_norm, family = "binomial")
-summary(logit.model2)
+logit_final <- glm(stroke ~ +age +avg_glucose_level +work_type, data = stroketrainLOG, family = "binomial")
+summary(logit_final)
+```
+
+
+## Cross table
+```{r}
+library(gmodels)
+library(caret)
+library(class)
+LogReg_Pred = predict(logit_final, newdata = stroketestLOG, type = "response")
+LogReg_Pred = ifelse(LogReg_Pred>0.5, 1, 0)
+CrossTable(x = stroketestLOG$stroke, y = LogReg_Pred, prop.chisq=FALSE)
+confusionMatrix(data = as.factor(LogReg_Pred), reference = as.factor(stroketestLOG$stroke))
 ```
 
