@@ -1,0 +1,66 @@
+---
+title: "ANN Model"
+author: "Yusuf Uzhunnan"
+date: "4/10/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+stroke <- read.csv("healthcare-dataset-stroke-data.csv")
+stroke <- stroke[stroke$gender != "Other",]
+stroke$id <- NULL
+stroke$gender <- as.factor(stroke$gender)
+stroke$work_type <- as.factor(stroke$work_type)
+stroke$smoking_status <- as.factor(stroke$smoking_status)
+stroke$ever_married <- as.factor(stroke$ever_married)
+stroke$Residence_type <- as.factor(stroke$Residence_type)
+stroke$heart_disease <- as.factor(stroke$heart_disease)
+stroke$bmi <- as.numeric(stroke$bmi)
+
+summary(stroke)
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+
+strokemm <- as.data.frame(model.matrix(~.-1,stroke))
+stroke_norm <- as.data.frame(lapply(strokemm, normalize))
+summary(stroke_norm)
+```
+
+##ANN Model
+```{r}
+set.seed(12345)
+testrows_ann <- sample(1:nrow(stroke_norm), 150) 
+stroketrain_ann <- stroke_norm[-testrows_ann, ]
+stroketrain_ann$stroke <- NULL
+stroketest_ann <- stroke_norm[testrows_ann, ]
+
+ann_train_labels <- stroke_norm[-testrows_ann, "stroke"]
+ann_test_labels <- stroke_norm[testrows_ann, "stroke"]
+
+library(neuralnet)
+ANNmodel <- neuralnet(ann_train_labels ~ ., data=stroketrain_ann,hidden = 2, stepmax = 100000000)
+plot(ANNmodel, rep = "best")
+```
+
+```{r}
+# obtain model results
+ann_results <- compute(ANNmodel, stroketest_ann)
+predicted_stroke <- ann_results$net.result
+predicted_stroke <- ifelse(predicted_stroke >= 0.5, 1,0)
+# Crosstable
+library(gmodels)
+CrossTable(x = ann_test_labels, y = predicted_stroke, 
+           prop.chisq=FALSE)
+
+library(caret)
+library(class)
+
+confusionMatrix(as.factor(predicted_stroke), as.factor(stroketest_ann$stroke))
+
+
+```
