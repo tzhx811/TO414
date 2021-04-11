@@ -30,7 +30,6 @@ normalize <- function(x) {
 
 strokemm <- as.data.frame(model.matrix(~.-1,stroke))
 stroke_norm <- as.data.frame(lapply(strokemm, normalize))
-summary(stroke_norm)
 ```
 
 ##KNN Model
@@ -48,12 +47,14 @@ knn_test_labels <- stroke_norm[testrows_knn, "stroke"]
 library(class)
 library(caret)
 stroke_knn_test_pred <- knn(train = stroketrain_knn, test = stroketest_knn,
-                      cl = knn_train_labels, k=sqrt(nrow(stroketrain_knn)))
+                      cl = knn_train_labels, k=sqrt(sqrt(nrow(stroketrain_knn))))
 ```
 
 ```{r}
-summary(stroke_knn_test_pred)
 library(gmodels)
 CrossTable(x = knn_test_labels, y = stroke_knn_test_pred, 
            prop.chisq=FALSE)
+
+library(caret)
+confusionMatrix(as.factor(stroke_knn_test_pred), as.factor(knn_test_labels))
 ```
