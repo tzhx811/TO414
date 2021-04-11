@@ -48,8 +48,8 @@ stroke_norm <- as.data.frame(lapply(strokemm, normalize))
 set.seed(12345)
 #25% ish in test, all others in train, for this choose round numbers - 1280 random in test, others in train
 testrows <- sample(1:nrow(stroke_norm),1280)
-stroketrainLOG <- stroke[-testrows, ]
-stroketestLOG <- stroke[testrows, ]
+stroketrainLOG <- stroke_norm[-testrows, ]
+stroketestLOG <- stroke_norm[testrows, ]
 ```
 
 
