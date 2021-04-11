@@ -35,7 +35,7 @@ stroke_norm <- as.data.frame(lapply(strokemm, normalize))
 ##KNN Model
 ```{r}
 set.seed(12345)
-testrows_knn <- sample(1:nrow(stroke_norm), 1200) 
+testrows_knn <- sample(1:nrow(stroke_norm), 1280) 
 stroketrain_knn <- stroke_norm[-testrows_knn, ]
 stroketest_knn <- stroke_norm[testrows_knn, ]
 
@@ -47,13 +47,7 @@ knn_test_labels <- stroke_norm[testrows_knn, "stroke"]
 library(class)
 library(caret)
 stroke_knn_test_pred <- knn(train = stroketrain_knn, test = stroketest_knn,
-                      cl = knn_train_labels, k=sqrt(sqrt(nrow(stroketrain_knn))))
-```
-
-```{r}
-library(gmodels)
-CrossTable(x = knn_test_labels, y = stroke_knn_test_pred, 
-           prop.chisq=FALSE)
+                      cl = knn_train_labels, k= sqrt(sqrt(nrow(stroketrain_knn))))
 
 library(caret)
 confusionMatrix(as.factor(stroke_knn_test_pred), as.factor(knn_test_labels))
