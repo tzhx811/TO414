@@ -55,22 +55,41 @@ stroketestLOG <- stroke_norm[testrows, ]
 
 ## Logit Model 
 ```{r}
-logit.model <- glm(stroke ~ ., data = stroketrainLOG, family = "binomial")
-summary(logit.model)
+library(gmodels)
+library(caret)
+library(class)
 
-logit_final <- glm(stroke ~ +age +avg_glucose_level +work_type, data = stroketrainLOG, family = "binomial")
+#Mass Effect
+MassEffect <- glm(stroke ~ ., data = stroketrainLOG, family = "binomial")
+summary(MassEffect)
+
+#Final
+logit_final <- glm(stroke ~ +age +avg_glucose_level  +work_typeSelf.employed +avg_glucose_level , data = stroketrainLOG, family = "binomial")
 summary(logit_final)
 ```
 
 
 ## Cross table
 ```{r}
-library(gmodels)
-library(caret)
-library(class)
 LogReg_Pred = predict(logit_final, newdata = stroketestLOG, type = "response")
 LogReg_Pred = ifelse(LogReg_Pred>0.5, 1, 0)
 CrossTable(x = stroketestLOG$stroke, y = LogReg_Pred, prop.chisq=FALSE)
 confusionMatrix(data = as.factor(LogReg_Pred), reference = as.factor(stroketestLOG$stroke))
+
+
+#With Error Cost?
+error_cost <- matrix(c(0,1,5,0), nrow = 2)
+logit_finalCost <- glm(stroke ~ +age +avg_glucose_level  +work_typeSelf.employed +avg_glucose_level , data = stroketrainLOG, 
+                       costs = error_cost, family = "binomial")
+summary(logit_finalCost)
+
+
+
+LogCostPredict <- predict(logit_finalCost, stroketrainLOG)
+CrossTable(x = stroketestLOG$stroke, y = LogCostPredict, prop.chisq=FALSE)
+confusionMatrix(data = as.factor(LogCostPredict), reference = as.factor(stroketestLOG$stroke)
+
+
+
 ```
 
