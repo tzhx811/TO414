@@ -85,3 +85,18 @@ barplot(prop.table(table(stroke$hypertension[stroke$ever_married=="No"], cut(str
 Although it seemed liked marriage, hypertension, and heart disease all lead to higher chances of stroke, age clearly has a very large impact on these three variables.
 
 When we split up based on marriage and age, we can see people of each age group are not much more prone to heart disease or hypertension due to marriage.
+
+## SVM
+```{r}
+set.seed(12345)
+testrows <- sample(1:nrow(stroke_norm), 1280) 
+stroketrain <- stroke_norm[-testrows, ]
+stroketest <- stroke_norm[testrows, ]
+
+library(kernlab)
+stroke_svm <- ksvm(stroke ~ ., data = stroketrain, kernel = "rbfdot")
+svm_pred <- predict(stroke_svm, stroketest)
+svm_pred = ifelse(svm_pred>0, 0, 1)
+library(caret)
+confusionMatrix(as.factor(svm_pred), as.factor(stroketest$stroke))
+```

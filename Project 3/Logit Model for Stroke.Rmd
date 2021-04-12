@@ -68,18 +68,53 @@ logit_final <- glm(stroke ~ +age +avg_glucose_level  +work_typeSelf.employed +av
 summary(logit_final)
 ```
 
-
 ## Cross table
 ```{r}
 LogReg_Pred = predict(logit_final, newdata = stroketestLOG, type = "response")
-LogReg_Pred = ifelse(LogReg_Pred>.5, 1, 0)
+LogReg_Pred = ifelse(LogReg_Pred>.08, 1, 0)
 CrossTable(x = stroketestLOG$stroke, y = LogReg_Pred, prop.chisq=FALSE)
 confusionMatrix(data = as.factor(LogReg_Pred), reference = as.factor(stroketestLOG$stroke))
-#can change the .5 because stroke is so unlikely so .5 might not be the best choice.
-#.5 <- represents probability of getting a stroke (or just trial and error for highest kappa)
-#could say like "as a doctor at which point probability would you start telling patients to be worried / start treatment
-#play with cut off rather than error cost
-#use Kappa for measurement of performance
+#.08 gave the highest kappa statistic
 
 ```
+
+## Age Split
+```{r}
+#New data for age split
+strokeAge <- read.csv("healthcare-dataset-stroke-data.csv")
+strokeAge <- strokeAge[strokeAge$gender != "Other",]
+strokeAge$id <- NULL
+strokeAge$gender <- as.factor(strokeAge$gender)
+strokeAge$work_type <- as.factor(strokeAge$work_type)
+strokeAge$smoking_status <- as.factor(strokeAge$smoking_status)
+strokeAge$ever_married <- as.factor(strokeAge$ever_married)
+strokeAge$Residence_type <- as.factor(strokeAge$Residence_type)
+strokeAge$heart_disease <- as.factor(strokeAge$heart_disease)
+strokeAge$bmi <- as.numeric(strokeAge$bmi)
+
+# create the bmi data that doesn't have NA
+bmi_data <- strokeAge[!is.na(strokeAge$bmi),]
+# can't use stroke to predict bmi
+bmi_model <- lm(bmi ~ .-stroke, data = bmi_data)
+
+# remove insignificant variables
+bmi_model <- lm(bmi ~ .-stroke-gender-Residence_type+age*hypertension*ever_married-heart_disease, data = bmi_data)
+
+
+strokeAge$bmi[is.na(strokeAge$bmi)] = predict(bmi_model, strokeAge[is.na(strokeAge$bmi),])
+
+
+#Setting up the new data with the splits
+ageYoung <- strokeAge[strokeAge$age <= 55,]
+ageOld <- strokeAge[strokeAge$age > 55,]
+bmiRisk <- strokeAge[strokeAge$bmi > 26.5 & strokeAge$bmi < 32,]
+bmiNotRisk <- strokeAge[strokeAge$bmi <= 26.5 | strokeAge$bmi >= 32,]
+
+
+```
+
+
+
+
+
 

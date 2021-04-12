@@ -23,6 +23,16 @@ stroke$bmi <- as.numeric(stroke$bmi)
 ```
 
 ```{r}
+# create the bmi data that doesn't have NA
+bmi_data <- stroke[!is.na(stroke$bmi),]
+# can't use stroke to predict bmi
+bmi_model <- lm(bmi ~ .-stroke, data = bmi_data)
+# remove insignificant variables
+bmi_model <- lm(bmi ~ .-stroke-gender-Residence_type+age*hypertension*ever_married-heart_disease, data = bmi_data)
+```
+
+```{r}
+stroke$bmi[is.na(stroke$bmi)] = predict(bmi_model, stroke[is.na(stroke$bmi),])
 summary(stroke)
 normalize <- function(x) {
   return ((x - min(x)) / (max(x) - min(x)))
@@ -30,9 +40,29 @@ normalize <- function(x) {
 
 strokemm <- as.data.frame(model.matrix(~.-1,stroke))
 stroke_norm <- as.data.frame(lapply(strokemm, normalize))
+
+set.seed(12345)
+#25% ish in test, all others in train, for this choose round numbers - 1280 random in test, others in train
+testrows <- sample(1:nrow(strokemm),1280)
+stroketrain <- strokemm[-testrows, ]
+stroketest <- strokemm[testrows, ]
 ```
 
-##KNN Model
+```{r}
+ageYoung <- stroketrain[stroketrain$age <= 55,]
+ageOld <- stroketrain[stroketrain$age > 55,]
+bmiRisk <- stroketrain[stroketrain$bmi > 26.5 && stroketrain$bmi < 32,]
+bmiNotRisk <- stroketrain[stroketrain$bmi <= 26.5 || stroketrain$bmi >= 32,]
+
+ageYoungNorm <- as.data.frame(lapply(ageYoung, normalize))
+ageOld <- as.data.frame(lapply(ageOld, normalize))
+bmiRisk <- as.data.frame(lapply(bmiRisk, normalize))
+bmiNotRisk <- as.data.frame(lapply(bmiNotRisk, normalize))
+```
+
+
+
+##KNN Model (Basic data)
 ```{r}
 set.seed(12345)
 testrows_knn <- sample(1:nrow(stroke_norm), 1280) 
@@ -49,6 +79,42 @@ library(caret)
 stroke_knn_test_pred <- knn(train = stroketrain_knn, test = stroketest_knn,
                       cl = knn_train_labels, k= sqrt(sqrt(nrow(stroketrain_knn))))
 
-library(caret)
 confusionMatrix(as.factor(stroke_knn_test_pred), as.factor(knn_test_labels))
+```
+
+##KNN Model (split by age)
+###Young Patients
+```{r}
+set.seed(12345)
+testrows_knn_young <- sample(1:nrow(ageYoungNorm), 641) 
+stroketrain_knn_young <- ageYoungNorm[-testrows_knn_young, ]
+stroketest_knn_young <- ageYoungNorm[testrows_knn_young, ]
+
+knn_train_labels_young <- ageYoungNorm[-testrows_knn_young, "stroke"]
+knn_test_labels_young <- ageYoungNorm[testrows_knn_young, "stroke"]
+
+library(class)
+library(caret)
+stroke_knn_test_pred_young <- knn(train = stroketrain_knn_young, test = stroketest_knn_young,
+                      cl = knn_train_labels_young, k= sqrt(sqrt(nrow(stroketrain_knn_young))))
+
+confusionMatrix(as.factor(stroke_knn_test_pred_young), as.factor(knn_test_labels_young))
+```
+
+###Old Patients
+```{r}
+set.seed(12345)
+testrows_knn_old <- sample(1:nrow(ageOld), 317) 
+stroketrain_knn_old <- ageOld[-testrows_knn_old, ]
+stroketest_knn_old <- ageOld[testrows_knn_old, ]
+
+knn_train_labels_old <- ageOld[-testrows_knn_old, "stroke"]
+knn_test_labels_old <- ageOld[testrows_knn_old, "stroke"]
+
+library(class)
+library(caret)
+stroke_knn_test_pred_old <- knn(train = stroketrain_knn_old[complete.cases(stroketrain_knn_old)], test = stroketest_knn_old[complete.cases(stroketest_knn_old)],
+                      cl = knn_train_labels_old, k = 2)
+
+confusionMatrix(as.factor(stroke_knn_test_pred_old), as.factor(knn_test_labels_old))
 ```
