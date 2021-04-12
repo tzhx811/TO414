@@ -49,6 +49,5 @@ library(caret)
 stroke_knn_test_pred <- knn(train = stroketrain_knn, test = stroketest_knn,
                       cl = knn_train_labels, k= sqrt(sqrt(nrow(stroketrain_knn))))
 
-library(caret)
 confusionMatrix(as.factor(stroke_knn_test_pred), as.factor(knn_test_labels))
 ```
