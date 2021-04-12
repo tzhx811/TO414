@@ -76,9 +76,9 @@ confusionMatrix(data = as.factor(LogReg_Pred), reference = as.factor(stroketestL
 
 ```
 
-## Age Split
+## Age Split Data loading and splitting
 ```{r}
-#New data for age split
+#New data for age  and BMI split
 strokeAge <- stroke
 strokeAgemm <- as.data.frame(model.matrix(~.-1,strokeAge))
 
@@ -95,6 +95,12 @@ bmiNotRiskNorm <- as.data.frame(lapply(bmiNotRisk, normalize))
 
 ```
 
+## Creating test and train split
+```{r}
+set.seed(12345)
+
+
+```
 
 
 
