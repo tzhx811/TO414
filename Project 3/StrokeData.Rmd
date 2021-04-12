@@ -40,9 +40,9 @@ bmiRisk <- stroketrain[stroketrain$bmi > 26.5 & stroketrain$bmi < 32,]
 bmiNotRisk <- stroketrain[stroketrain$bmi <= 26.5 | stroketrain$bmi >= 32,]
 
 ageYoungNorm <- as.data.frame(lapply(ageYoung, normalize))
-ageOld <- as.data.frame(lapply(ageOld, normalize))
-bmiRisk <- as.data.frame(lapply(bmiRisk, normalize))
-bmiNotRisk <- as.data.frame(lapply(bmiNotRisk, normalize))
+ageOldNorm <- as.data.frame(lapply(ageOld, normalize))
+bmiRiskNorm <- as.data.frame(lapply(bmiRisk, normalize))
+bmiNotRiskNorm <- as.data.frame(lapply(bmiNotRisk, normalize))
 
 ```
 

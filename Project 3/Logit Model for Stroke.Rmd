@@ -28,10 +28,8 @@ stroke$bmi <- as.numeric(stroke$bmi)
 bmi_data <- stroke[!is.na(stroke$bmi),]
 # can't use stroke to predict bmi
 bmi_model <- lm(bmi ~ .-stroke, data = bmi_data)
-summary(bmi_model)
 # remove insignificant variables
 bmi_model <- lm(bmi ~ .-stroke-gender-Residence_type+age*hypertension*ever_married-heart_disease, data = bmi_data)
-summary(bmi_model)
 
 stroke$bmi[is.na(stroke$bmi)] = predict(bmi_model, stroke[is.na(stroke$bmi),])
 
@@ -81,35 +79,19 @@ confusionMatrix(data = as.factor(LogReg_Pred), reference = as.factor(stroketestL
 ## Age Split
 ```{r}
 #New data for age split
-strokeAge <- read.csv("healthcare-dataset-stroke-data.csv")
-strokeAge <- strokeAge[strokeAge$gender != "Other",]
-strokeAge$id <- NULL
-strokeAge$gender <- as.factor(strokeAge$gender)
-strokeAge$work_type <- as.factor(strokeAge$work_type)
-strokeAge$smoking_status <- as.factor(strokeAge$smoking_status)
-strokeAge$ever_married <- as.factor(strokeAge$ever_married)
-strokeAge$Residence_type <- as.factor(strokeAge$Residence_type)
-strokeAge$heart_disease <- as.factor(strokeAge$heart_disease)
-strokeAge$bmi <- as.numeric(strokeAge$bmi)
-
-# create the bmi data that doesn't have NA
-bmi_data <- strokeAge[!is.na(strokeAge$bmi),]
-# can't use stroke to predict bmi
-bmi_model <- lm(bmi ~ .-stroke, data = bmi_data)
-
-# remove insignificant variables
-bmi_model <- lm(bmi ~ .-stroke-gender-Residence_type+age*hypertension*ever_married-heart_disease, data = bmi_data)
-
-
-strokeAge$bmi[is.na(strokeAge$bmi)] = predict(bmi_model, strokeAge[is.na(strokeAge$bmi),])
-
+strokeAge <- stroke
+strokeAgemm <- as.data.frame(model.matrix(~.-1,strokeAge))
 
 #Setting up the new data with the splits
-ageYoung <- strokeAge[strokeAge$age <= 55,]
-ageOld <- strokeAge[strokeAge$age > 55,]
-bmiRisk <- strokeAge[strokeAge$bmi > 26.5 & strokeAge$bmi < 32,]
-bmiNotRisk <- strokeAge[strokeAge$bmi <= 26.5 | strokeAge$bmi >= 32,]
+ageYoung <- strokeAgemm[strokeAgemm$age <= 55,]
+ageOld <- strokeAgemm[strokeAgemm$age > 55,]
+bmiRisk <- strokeAgemm[strokeAgemm$bmi > 26.5 & strokeAgemm$bmi < 32,]
+bmiNotRisk <- strokeAgemm[strokeAgemm$bmi <= 26.5 | strokeAgemm$bmi >= 32,]
 
+ageYoungNorm <- as.data.frame(lapply(ageYoung, normalize))
+ageOldNorm <- as.data.frame(lapply(ageOld, normalize))
+bmiRiskNorm <- as.data.frame(lapply(bmiRisk, normalize))
+bmiNotRiskNorm <- as.data.frame(lapply(bmiNotRisk, normalize))
 
 ```
 
