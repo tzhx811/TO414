@@ -31,10 +31,11 @@ stroke_norm <- as.data.frame(lapply(strokemm, normalize))
 summary(stroke_norm)
 ```
 
+
 ##ANN Model
 ```{r}
 set.seed(12345)
-testrows_ann <- sample(1:nrow(stroke_norm), 150) 
+testrows_ann <- sample(1:nrow(stroke_norm), 1280) 
 stroketrain_ann <- stroke_norm[-testrows_ann, ]
 stroketrain_ann$stroke <- NULL
 stroketest_ann <- stroke_norm[testrows_ann, ]
@@ -43,7 +44,7 @@ ann_train_labels <- stroke_norm[-testrows_ann, "stroke"]
 ann_test_labels <- stroke_norm[testrows_ann, "stroke"]
 
 library(neuralnet)
-ANNmodel <- neuralnet(ann_train_labels ~ ., data=stroketrain_ann,hidden = 2, stepmax = 100000000)
+ANNmodel <- neuralnet(ann_train_labels ~ ., data=stroketrain_ann,hidden =2, stepmax = 100000000)
 plot(ANNmodel, rep = "best")
 ```
 
@@ -64,3 +65,30 @@ confusionMatrix(as.factor(predicted_stroke), as.factor(stroketest_ann$stroke))
 
 
 ```
+
+## ANN by Age
+```{r}
+#test/train
+
+ageYoung <- strokemm[strokemm$age <= 55,]
+ageOld <- strokemm[strokemm$age > 55,]
+bmiRisk <- strokemm[strokemm$bmi > 26.5 && strokemm$bmi < 32,]
+bmiNotRisk <- strokemm[strokemm$bmi <= 26.5 || strokemm$bmi >= 32,]
+
+ageYoungNorm <- as.data.frame(lapply(ageYoung, normalize))
+ageOldNorm <- as.data.frame(lapply(ageOld, normalize))
+bmiRiskNorm <- as.data.frame(lapply(bmiRisk, normalize))
+bmiNotRiskNorm <- as.data.frame(lapply(bmiNotRisk, normalize))
+
+set.seed(12345)
+testrows_ageyoung <- sample(1:nrow(ageYoungNorm), 1280) 
+ageyoungtrain_ann <- ageYoungNorm[-testrows_ageyoung, ]
+ageyoungtrain_ann$stroke <- NULL
+ageyoungtest_ann <- ageYoungNorm[testrows_ageyoung, ]
+
+ageyoung_train_labels <- ageYoungNorm[-testrows_ageyoung, "stroke"]
+ageyoung_test_labels <- ageYoungNorm[testrows_ageyoung, "stroke"]
+
+
+```
+
