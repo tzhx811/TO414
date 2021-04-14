@@ -163,6 +163,9 @@ bmi_combined_Logpred = c(risk_Logpred, safe_Logpred)
 bmi_true_label = c(bmi_risk_data_norm[[2]]$stroke, bmi_safe_data_norm[[2]]$stroke)
 
 confusionMatrix(as.factor(combined_Logpred), as.factor(bmi_true_label))
+summary(risk_Logpred)
+summary(safe_Logpred)
+summary(bmi_combined_Logpred)
 
 ```
 
