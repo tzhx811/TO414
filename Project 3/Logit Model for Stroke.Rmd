@@ -28,10 +28,8 @@ stroke$bmi <- as.numeric(stroke$bmi)
 bmi_data <- stroke[!is.na(stroke$bmi),]
 # can't use stroke to predict bmi
 bmi_model <- lm(bmi ~ .-stroke, data = bmi_data)
-summary(bmi_model)
 # remove insignificant variables
 bmi_model <- lm(bmi ~ .-stroke-gender-Residence_type+age*hypertension*ever_married-heart_disease, data = bmi_data)
-summary(bmi_model)
 
 stroke$bmi[is.na(stroke$bmi)] = predict(bmi_model, stroke[is.na(stroke$bmi),])
 
@@ -68,18 +66,43 @@ logit_final <- glm(stroke ~ +age +avg_glucose_level  +work_typeSelf.employed +av
 summary(logit_final)
 ```
 
-
 ## Cross table
 ```{r}
 LogReg_Pred = predict(logit_final, newdata = stroketestLOG, type = "response")
-LogReg_Pred = ifelse(LogReg_Pred>.5, 1, 0)
+LogReg_Pred = ifelse(LogReg_Pred>.08, 1, 0)
 CrossTable(x = stroketestLOG$stroke, y = LogReg_Pred, prop.chisq=FALSE)
 confusionMatrix(data = as.factor(LogReg_Pred), reference = as.factor(stroketestLOG$stroke))
-#can change the .5 because stroke is so unlikely so .5 might not be the best choice.
-#.5 <- represents probability of getting a stroke (or just trial and error for highest kappa)
-#could say like "as a doctor at which point probability would you start telling patients to be worried / start treatment
-#play with cut off rather than error cost
-#use Kappa for measurement of performance
+#.08 gave the highest kappa statistic
 
 ```
+
+## Age Split Data loading and splitting
+```{r}
+#New data for age  and BMI split
+strokeAge <- stroke
+strokeAgemm <- as.data.frame(model.matrix(~.-1,strokeAge))
+
+#Setting up the new data with the splits
+ageYoung <- strokeAgemm[strokeAgemm$age <= 55,]
+ageOld <- strokeAgemm[strokeAgemm$age > 55,]
+bmiRisk <- strokeAgemm[strokeAgemm$bmi > 26.5 & strokeAgemm$bmi < 32,]
+bmiNotRisk <- strokeAgemm[strokeAgemm$bmi <= 26.5 | strokeAgemm$bmi >= 32,]
+
+ageYoungNorm <- as.data.frame(lapply(ageYoung, normalize))
+ageOldNorm <- as.data.frame(lapply(ageOld, normalize))
+bmiRiskNorm <- as.data.frame(lapply(bmiRisk, normalize))
+bmiNotRiskNorm <- as.data.frame(lapply(bmiNotRisk, normalize))
+
+```
+
+## Creating test and train split
+```{r}
+set.seed(12345)
+
+
+```
+
+
+
+
 

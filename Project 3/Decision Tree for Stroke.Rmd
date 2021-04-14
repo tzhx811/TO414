@@ -65,22 +65,19 @@ library(class)
 confusionMatrix(stroke_dt_pred, as.factor(stroketest$stroke))
 ```
 
-## Decision Trees Based On Age and BMI
+## Decision Trees Based On Age
 ```{r}
 #separate data set for further insights
 ageYoung <- stroketrain[stroketrain$age <= 55,]
 ageOld <- stroketrain[stroketrain$age > 55,]
-bmiRisk <- stroketrain[stroketrain$bmi > 26.5 && stroketrain$bmi < 32,]
-bmiNotRisk <- stroketrain[stroketrain$bmi <= 26.5 || stroketrain$bmi >= 32,]
 
 ageYoungtest <- stroketest[stroketest$age <= 55,]
 ageOldtest <- stroketest[stroketest$age > 55,]
-bmiRisktest <- stroketest[stroketest$bmi > 26.5 && stroketest$bmi < 32,]
-bmiNotRisktest <- stroketest[stroketest$bmi <= 26.5 || stroketest$bmi >= 32,]
+
 
 #Young Patients
 #rebalance errors - want to prioritize minimizing false negatives, if people are at risk of stroke we want to know
-error_cost2 <- matrix(c(0, 1, 15, 0), nrow = 2)
+error_cost2 <- matrix(c(0, 1, 10, 0), nrow = 2)
 
 ageYoung_dt <- C5.0(as.factor(stroke) ~ ., data = ageYoung, costs = error_cost2)
 plot(ageYoung_dt)
@@ -110,5 +107,66 @@ CrossTable(ageOldtest$stroke, ageOld_dt_pred)
 # Confusion Matrix and Kappa Statistics
 confusionMatrix(ageOld_dt_pred, as.factor(ageOldtest$stroke))
 
+#Combined confusion matrix
+combinedagepredict <- c(ageOld_dt_pred,ageYoung_dt_pred)-1
+summary(combinedagepredict)
+
+combinedageactual <- c(ageOldtest$stroke, ageYoungtest$stroke)
+summary(combinedageactual)
+
+confusionMatrix(as.factor(combinedagepredict), as.factor(combinedageactual))
+```
+
+## Decision Trees Based on BMI
+```{r}
+# separate data for further insight
+bmiRisk <- stroketrain[stroketrain$bmi > 26.5 & stroketrain$bmi < 32,]
+bmiNotRisk <- stroketrain[stroketrain$bmi <= 26.5 | stroketrain$bmi >= 32,]
+
+bmiRisktest <- stroketest[stroketest$bmi > 26.5 & stroketest$bmi < 32,]
+bmiNotRisktest <- stroketest[stroketest$bmi <= 26.5 | stroketest$bmi >= 32,]
+
+summary(bmiRisk)
+
+#Risky BMI Patients
+#rebalance errors - want to prioritize minimizing false negatives, if people are at risk of stroke we want to know
+error_cost4 <- matrix(c(0, 1, 10, 0), nrow = 2)
+
+bmiRisk_dt <- C5.0(as.factor(stroke) ~ ., data = bmiRisk, costs = error_cost4)
+plot(bmiRisk_dt)
+summary(bmiRisk_dt)
+
+#predict the test data
+bmiRisk_dt_pred <- predict(bmiRisk_dt, bmiRisktest)
+
+CrossTable(bmiRisktest$stroke, bmiRisk_dt_pred)
+
+# Confusion Matrix and Kappa Statistics
+confusionMatrix(bmiRisk_dt_pred, as.factor(bmiRisktest$stroke))
+
+#Not Risky BMI Patients
+#rebalance errors - want to prioritize minimizing false negatives, if people are at risk of stroke we want to know
+error_cost5 <- matrix(c(0, 1, 10, 0), nrow = 2)
+
+bmiNotRisk_dt <- C5.0(as.factor(stroke) ~ ., data = bmiNotRisk, costs = error_cost5)
+plot(bmiNotRisk_dt)
+summary(bmiNotRisk_dt)
+
+#predict the test data
+bmiNotRisk_dt_pred <- predict(bmiNotRisk_dt, bmiNotRisktest)
+
+CrossTable(bmiNotRisktest$stroke, bmiNotRisk_dt_pred)
+
+# Confusion Matrix and Kappa Statistics
+confusionMatrix(bmiNotRisk_dt_pred, as.factor(bmiNotRisktest$stroke))
+
+#Combined confusion matrix
+combinedbmipredict <- c(bmiNotRisk_dt_pred,bmiRisk_dt_pred)-1
+summary(combinedbmipredict)
+
+combinedbmiactual <- c(bmiNotRisktest$stroke, bmiRisktest$stroke)
+summary(combinedbmiactual)
+
+confusionMatrix(as.factor(combinedbmipredict), as.factor(combinedbmiactual))
 ```
 
