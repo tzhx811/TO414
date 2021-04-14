@@ -76,33 +76,94 @@ confusionMatrix(data = as.factor(LogReg_Pred), reference = as.factor(stroketestL
 
 ```
 
-## Age Split Data loading and splitting
+## Age and BMI Data Loading and Splitting
 ```{r}
-#New data for age  and BMI split
-strokeAge <- stroke
-strokeAgemm <- as.data.frame(model.matrix(~.-1,strokeAge))
+set.seed(42)
 
-#Setting up the new data with the splits
-ageYoung <- strokeAgemm[strokeAgemm$age <= 55,]
-ageOld <- strokeAgemm[strokeAgemm$age > 55,]
-bmiRisk <- strokeAgemm[strokeAgemm$bmi > 26.5 & strokeAgemm$bmi < 32,]
-bmiNotRisk <- strokeAgemm[strokeAgemm$bmi <= 26.5 | strokeAgemm$bmi >= 32,]
+normalize <- function(x) {
+  if(max(x) - min(x) == 0){
+    return (x)
+  }
+  return ((x - min(x)) / (max(x) - min(x)))
+}
 
-ageYoungNorm <- as.data.frame(lapply(ageYoung, normalize))
-ageOldNorm <- as.data.frame(lapply(ageOld, normalize))
-bmiRiskNorm <- as.data.frame(lapply(bmiRisk, normalize))
-bmiNotRiskNorm <- as.data.frame(lapply(bmiNotRisk, normalize))
+set_splits <- function(x, norm) {
+  if(norm){
+    x = as.data.frame(lapply(as.data.frame(model.matrix(~.-1,x)), normalize))
+  }
+  testrows <- sample(1:nrow(x), 0.25*nrow(x))
+  return (list(x[-testrows,], x[testrows,]))
+}
 
+general_norm <- set_splits(stroke, norm = TRUE)
+age_young_data_norm = set_splits(stroke[stroke$age<=55,], norm = TRUE)
+age_old_data_norm = set_splits(stroke[stroke$age>55,], norm = TRUE)
+bmi_risk_data_norm = set_splits(stroke[stroke$bmi>26.5 & stroke$bmi<32,], norm = TRUE)
+bmi_safe_data_norm = set_splits(stroke[stroke$bmi<=26.5 | stroke$bmi>=32,], norm = TRUE)
 ```
 
-## Creating test and train split
+## Age Split Models
 ```{r}
-set.seed(12345)
+#Young
+masslogmodel_young <- glm(stroke ~., data = age_young_data_norm[[1]], family = "binomial")
+summary(masslogmodel_young)
 
+finallogmodel_young <- glm(stroke ~ +age +hypertension, data = age_young_data_norm[[1]], family = "binomial")
+summary(finallogmodel_young)
 
+young_Logpred <- predict(finallogmodel_young, age_young_data_norm[[2]])
+young_Logpred = ifelse(young_Logpred>0, 0, 1)
+
+#Old
+masslogmodel_old <- glm(stroke ~., data = age_old_data_norm[[1]], family = "binomial")
+summary(masslogmodel_old)
+
+finallogmodel_old <- glm(stroke ~ +age +avg_glucose_level +work_typePrivate, data = age_old_data_norm[[1]], family = "binomial")
+summary(finallogmodel_old)
+
+old_Logpred <- predict(finallogmodel_old, age_old_data_norm[[2]])
+old_Logpred = ifelse(old_Logpred>0, 0, 1)
+
+#Combine Predictions
+age_combined_Logpred = c(young_Logpred, old_Logpred)
+
+age_true_label = c(age_young_data_norm[[2]]$stroke, age_old_data_norm[[2]]$stroke)
+
+confusionMatrix(as.factor(combined_Logpred), as.factor(age_true_label))
+summary(young_Logpred)
+summary(old_Logpred)
+summary(combined_Logpred)
 ```
 
+## BMI Split Models
+```{r}
+#Risk
+masslogmodel_risk <- glm(stroke ~., data = bmi_risk_data_norm[[1]], family = "binomial")
+summary(masslogmodel_risk)
 
+finallogmodel_risk <- glm(stroke ~ +age +avg_glucose_level, data = bmi_risk_data_norm[[1]], family = "binomial")
+summary(finallogmodel_risk)
 
+risk_Logpred <- predict(finallogmodel_risk, bmi_risk_data_norm[[2]])
+risk_Logpred = ifelse(risk_Logpred>0, 0, 1)
+
+#Safe
+masslogmodel_safe <- glm(stroke ~., data = bmi_safe_data_norm[[1]], family = "binomial")
+summary(masslogmodel_safe)
+
+finallogmodel_safe <- glm(stroke ~ +age +avg_glucose_level +work_typePrivate, data = age_old_data_norm[[1]], family = "binomial")
+summary(finallogmodel_safe)
+
+safe_Logpred <- predict(finallogmodel_safe, bmi_safe_data_norm[[2]])
+safe_Logpred = ifelse(safe_Logpred>0, 0, 1)
+
+#Combine Predictions
+bmi_combined_Logpred = c(risk_Logpred, safe_Logpred)
+
+bmi_true_label = c(bmi_risk_data_norm[[2]]$stroke, bmi_safe_data_norm[[2]]$stroke)
+
+confusionMatrix(as.factor(combined_Logpred), as.factor(bmi_true_label))
+
+```
 
 
