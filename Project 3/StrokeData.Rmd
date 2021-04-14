@@ -48,5 +48,8 @@ bmiNotRisk <- as.data.frame(lapply(bmiNotRisk, normalize))
 
 
 
+```{r}
+
+```
 
 
