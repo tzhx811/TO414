@@ -62,17 +62,17 @@ MassEffect <- glm(stroke ~ ., data = stroketrainLOG, family = "binomial")
 summary(MassEffect)
 
 #Final
-logit_final <- glm(stroke ~ +age +avg_glucose_level  +work_typeSelf.employed +avg_glucose_level , data = stroketrainLOG, family = "binomial")
+logit_final <- step(MassEffect)
 summary(logit_final)
 ```
 
 ## Cross table
 ```{r}
 LogReg_Pred = predict(logit_final, newdata = stroketestLOG, type = "response")
-LogReg_Pred = ifelse(LogReg_Pred>.08, 1, 0)
+LogReg_Pred = ifelse(LogReg_Pred>.11, 1, 0)
 CrossTable(x = stroketestLOG$stroke, y = LogReg_Pred, prop.chisq=FALSE)
 confusionMatrix(data = as.factor(LogReg_Pred), reference = as.factor(stroketestLOG$stroke))
-#.08 gave the highest kappa statistic
+#.11 gave the highest kappa statistic
 
 ```
 
@@ -108,7 +108,7 @@ bmi_safe_data_norm = set_splits(stroke[stroke$bmi<=26.5 | stroke$bmi>=32,], norm
 masslogmodel_young <- glm(stroke ~., data = age_young_data_norm[[1]], family = "binomial")
 summary(masslogmodel_young)
 
-finallogmodel_young <- glm(stroke ~ +age +hypertension, data = age_young_data_norm[[1]], family = "binomial")
+finallogmodel_young <- step(masslogmodel_young)
 summary(finallogmodel_young)
 
 young_Logpred <- predict(finallogmodel_young, age_young_data_norm[[2]])
@@ -118,7 +118,7 @@ young_Logpred = ifelse(young_Logpred>0, 0, 1)
 masslogmodel_old <- glm(stroke ~., data = age_old_data_norm[[1]], family = "binomial")
 summary(masslogmodel_old)
 
-finallogmodel_old <- glm(stroke ~ +age +avg_glucose_level +work_typePrivate, data = age_old_data_norm[[1]], family = "binomial")
+finallogmodel_old <- step(masslogmodel_old)
 summary(finallogmodel_old)
 
 old_Logpred <- predict(finallogmodel_old, age_old_data_norm[[2]])
@@ -129,10 +129,10 @@ age_combined_Logpred = c(young_Logpred, old_Logpred)
 
 age_true_label = c(age_young_data_norm[[2]]$stroke, age_old_data_norm[[2]]$stroke)
 
-confusionMatrix(as.factor(combined_Logpred), as.factor(age_true_label))
+confusionMatrix(as.factor(age_combined_Logpred), as.factor(age_true_label))
 summary(young_Logpred)
 summary(old_Logpred)
-summary(combined_Logpred)
+summary(age_combined_Logpred)
 ```
 
 ## BMI Split Models
@@ -141,7 +141,7 @@ summary(combined_Logpred)
 masslogmodel_risk <- glm(stroke ~., data = bmi_risk_data_norm[[1]], family = "binomial")
 summary(masslogmodel_risk)
 
-finallogmodel_risk <- glm(stroke ~ +age +avg_glucose_level, data = bmi_risk_data_norm[[1]], family = "binomial")
+finallogmodel_risk <- step(masslogmodel_risk)
 summary(finallogmodel_risk)
 
 risk_Logpred <- predict(finallogmodel_risk, bmi_risk_data_norm[[2]])
@@ -151,7 +151,7 @@ risk_Logpred = ifelse(risk_Logpred>0, 0, 1)
 masslogmodel_safe <- glm(stroke ~., data = bmi_safe_data_norm[[1]], family = "binomial")
 summary(masslogmodel_safe)
 
-finallogmodel_safe <- glm(stroke ~ +age +avg_glucose_level +work_typePrivate, data = age_old_data_norm[[1]], family = "binomial")
+finallogmodel_safe <- step(masslogmodel_safe)
 summary(finallogmodel_safe)
 
 safe_Logpred <- predict(finallogmodel_safe, bmi_safe_data_norm[[2]])
@@ -162,7 +162,7 @@ bmi_combined_Logpred = c(risk_Logpred, safe_Logpred)
 
 bmi_true_label = c(bmi_risk_data_norm[[2]]$stroke, bmi_safe_data_norm[[2]]$stroke)
 
-confusionMatrix(as.factor(combined_Logpred), as.factor(bmi_true_label))
+confusionMatrix(as.factor(bmi_combined_Logpred), as.factor(bmi_true_label))
 summary(risk_Logpred)
 summary(safe_Logpred)
 summary(bmi_combined_Logpred)
