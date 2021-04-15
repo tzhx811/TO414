@@ -145,7 +145,7 @@ finallogmodel_risk <- step(masslogmodel_risk)
 summary(finallogmodel_risk)
 
 risk_Logpred <- predict(finallogmodel_risk, bmi_risk_data_norm[[2]], type= "response")
-risk_Logpred = ifelse(risk_Logpred>0, 0, 1)
+risk_Logpred = ifelse(risk_Logpred>.4, 0, 1)
 
 #Safe
 masslogmodel_safe <- glm(stroke ~., data = bmi_safe_data_norm[[1]], family = "binomial")
@@ -155,7 +155,7 @@ finallogmodel_safe <- step(masslogmodel_safe)
 summary(finallogmodel_safe)
 
 safe_Logpred <- predict(finallogmodel_safe, bmi_safe_data_norm[[2]], type= "response")
-safe_Logpred = ifelse(safe_Logpred>0, 0, 1)
+safe_Logpred = ifelse(safe_Logpred>.0004, 0, 1)
 
 #Combine Predictions
 bmi_combined_Logpred = c(risk_Logpred, safe_Logpred)
@@ -165,7 +165,8 @@ bmi_true_label = c(bmi_risk_data_norm[[2]]$stroke, bmi_safe_data_norm[[2]]$strok
 confusionMatrix(as.factor(bmi_combined_Logpred), as.factor(bmi_true_label))
 summary(risk_Logpred)
 summary(safe_Logpred)
-summary(bmi_combined_Logpred)
+
+
 
 ```
 
