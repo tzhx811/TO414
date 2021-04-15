@@ -111,7 +111,7 @@ summary(masslogmodel_young)
 finallogmodel_young <- step(masslogmodel_young)
 summary(finallogmodel_young)
 
-young_Logpred <- predict(finallogmodel_young, age_young_data_norm[[2]])
+young_Logpred <- predict(finallogmodel_young, age_young_data_norm[[2]], type= "response")
 young_Logpred = ifelse(young_Logpred>0, 0, 1)
 
 #Old
@@ -121,7 +121,7 @@ summary(masslogmodel_old)
 finallogmodel_old <- step(masslogmodel_old)
 summary(finallogmodel_old)
 
-old_Logpred <- predict(finallogmodel_old, age_old_data_norm[[2]])
+old_Logpred <- predict(finallogmodel_old, age_old_data_norm[[2]], type= "response")
 old_Logpred = ifelse(old_Logpred>0, 0, 1)
 
 #Combine Predictions
@@ -144,7 +144,7 @@ summary(masslogmodel_risk)
 finallogmodel_risk <- step(masslogmodel_risk)
 summary(finallogmodel_risk)
 
-risk_Logpred <- predict(finallogmodel_risk, bmi_risk_data_norm[[2]])
+risk_Logpred <- predict(finallogmodel_risk, bmi_risk_data_norm[[2]], type= "response")
 risk_Logpred = ifelse(risk_Logpred>0, 0, 1)
 
 #Safe
@@ -154,7 +154,7 @@ summary(masslogmodel_safe)
 finallogmodel_safe <- step(masslogmodel_safe)
 summary(finallogmodel_safe)
 
-safe_Logpred <- predict(finallogmodel_safe, bmi_safe_data_norm[[2]])
+safe_Logpred <- predict(finallogmodel_safe, bmi_safe_data_norm[[2]], type= "response")
 safe_Logpred = ifelse(safe_Logpred>0, 0, 1)
 
 #Combine Predictions
