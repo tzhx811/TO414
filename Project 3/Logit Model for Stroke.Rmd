@@ -112,7 +112,7 @@ finallogmodel_young <- step(masslogmodel_young)
 summary(finallogmodel_young)
 
 young_Logpred <- predict(finallogmodel_young, age_young_data_norm[[2]], type= "response")
-young_Logpred = ifelse(young_Logpred>0, 0, 1)
+young_Logpred = ifelse(young_Logpred>.0002, 0, 1)
 
 #Old
 masslogmodel_old <- glm(stroke ~., data = age_old_data_norm[[1]], family = "binomial")
@@ -122,7 +122,7 @@ finallogmodel_old <- step(masslogmodel_old)
 summary(finallogmodel_old)
 
 old_Logpred <- predict(finallogmodel_old, age_old_data_norm[[2]], type= "response")
-old_Logpred = ifelse(old_Logpred>0, 0, 1)
+old_Logpred = ifelse(old_Logpred>.45, 0, 1)
 
 #Combine Predictions
 age_combined_Logpred = c(young_Logpred, old_Logpred)
@@ -130,9 +130,9 @@ age_combined_Logpred = c(young_Logpred, old_Logpred)
 age_true_label = c(age_young_data_norm[[2]]$stroke, age_old_data_norm[[2]]$stroke)
 
 confusionMatrix(as.factor(age_combined_Logpred), as.factor(age_true_label))
-summary(young_Logpred)
-summary(old_Logpred)
-summary(age_combined_Logpred)
+
+#These threshold gave us the highest kappa statistic
+#Basically just guess all 1 for those with risk factor and 0 for those with not 
 ```
 
 ## BMI Split Models
@@ -163,11 +163,9 @@ bmi_combined_Logpred = c(risk_Logpred, safe_Logpred)
 bmi_true_label = c(bmi_risk_data_norm[[2]]$stroke, bmi_safe_data_norm[[2]]$stroke)
 
 confusionMatrix(as.factor(bmi_combined_Logpred), as.factor(bmi_true_label))
-summary(risk_Logpred)
-summary(safe_Logpred)
 
-
-
+#These threshold gave us the highest kappa statistic
+#Basically just guess all 1 for those with risk factor and 0 for those with not 
 ```
 
 
