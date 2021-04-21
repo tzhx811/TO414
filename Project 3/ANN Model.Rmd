@@ -72,34 +72,25 @@ bmi_safe_data_norm = set_splits(stroke[stroke$bmi<=26.5 | stroke$bmi>=32,], norm
 ##ANN Model
 ```{r cache = TRUE}
 
-library(neuralnet)
 ANNmodel <- neuralnet(general_norm[[1]]$stroke ~ ., data=general_norm[[1]],hidden =2, stepmax = 1000000)
 plot(ANNmodel, rep = "best")
-```
 
-```{r cache = TRUE}
 # obtain model results
 ann_results <- compute(ANNmodel, general_norm[[2]])
 predicted_stroke <- ann_results$net.result
 predicted_stroke <- ifelse(predicted_stroke >= 0.5, 1,0)
-
-
-library(caret)
-library(class)
 
 confusionMatrix(as.factor(predicted_stroke), as.factor(general_norm[[2]]$stroke))
 
 
 ```
 
-## ANN by Age: Young
+### ANN Age Based Model
 ```{r cache = TRUE}
-#Build Model
+#Young
 ANNyoungmodel <- neuralnet(age_young_data_norm[[1]]$stroke ~ ., data=age_young_data_norm[[1]],hidden =2)
 plot(ANNyoungmodel, rep = "best")
-```
 
-```{r cache = TRUE}
 # obtain model results
 annageyoung_results <- compute(ANNyoungmodel, age_young_data_norm[[2]])
 predicted_strokeyoung <- annageyoung_results$net.result
@@ -108,16 +99,11 @@ predicted_strokeyoung <- ifelse(predicted_strokeyoung >= 0.5, 1,0)
 # Accuracy, Kappa, etc.
 confusionMatrix(as.factor(predicted_strokeyoung), as.factor(age_young_data_norm[[2]]$stroke))
 
-```
 
-## ANN by Age: Old
-```{r cache = TRUE}
-#Build Model
+#Old
 ANNoldmodel <- neuralnet(age_old_data_norm[[1]]$stroke ~ ., data=age_old_data_norm[[1]],hidden =2)
 plot(ANNoldmodel, rep = "best")
-```
 
-```{r cache = TRUE}
 # obtain model results
 annageold_results <- compute(ANNoldmodel, age_old_data_norm[[2]])
 predicted_strokeold <- annageold_results$net.result
@@ -126,23 +112,19 @@ predicted_strokeold <- ifelse(predicted_strokeold >= 0.5, 1,0)
 # Accuracy, Kappa, etc.
 confusionMatrix(as.factor(predicted_strokeold), as.factor(age_old_data_norm[[2]]$stroke))
 
-```
-## ANN by Age (Combined Pred.)
-```{r}
+#Combined Model
 combined_predAge = c(predicted_strokeold, predicted_strokeyoung)
 true_label = c(age_old_data_norm[[2]]$stroke, age_young_data_norm[[2]]$stroke)
 confusionMatrix(as.factor(combined_pred), as.factor(true_label))
 ```
 
 
-## ANN by BMI: Risky
+### ANN BMI Based Model
 ```{r cache = TRUE}
-#Build Model
+#Risk
 ANNriskmodel <- neuralnet(bmi_risk_data_norm[[1]]$stroke ~ ., data=bmi_risk_data_norm[[1]],hidden =2)
 plot(ANNriskmodel, rep = "best")
-```
 
-```{r cache = TRUE}
 # obtain model results
 annbmirisk_results <- compute(ANNriskmodel, bmi_risk_data_norm[[2]])
 predicted_strokerisk <- annbmirisk_results$net.result
@@ -151,16 +133,11 @@ predicted_strokerisk <- ifelse(predicted_strokerisk >= 0.5, 1,0)
 # Accuracy, Kappa, etc.
 confusionMatrix(as.factor(predicted_strokerisk), as.factor(bmi_risk_data_norm[[2]]$stroke))
 
-```
 
-## ANN by BMI: Safe
-```{r cache = TRUE}
-#Build Model
+#Safe
 ANNsafemodel <- neuralnet(bmi_safe_data_norm[[1]]$stroke ~ ., data=bmi_safe_data_norm[[1]],hidden =2)
 plot(ANNsafemodel, rep = "best")
-```
 
-```{r cache = TRUE}
 # obtain model results
 annbmisafe_results <- compute(ANNsafemodel, bmi_safe_data_norm[[2]])
 predicted_strokesafe <- annbmisafe_results$net.result
@@ -169,11 +146,7 @@ predicted_strokesafe <- ifelse(predicted_strokesafe >= 0.5, 1,0)
 # Accuracy, Kappa, etc.
 confusionMatrix(as.factor(predicted_strokesafe), as.factor(bmi_safe_data_norm[[2]]$stroke))
 
-```
-
-
-## ANN by BMI (Combined Pred.)
-```{r}
+#Combined Model
 combined_predbmi= c(predicted_strokerisk, predicted_strokesafe)
 true_label = c(bmi_risk_data_norm[[2]]$stroke, bmi_safe_data_norm[[2]]$stroke)
 confusionMatrix(as.factor(combined_predbmi), as.factor(true_label))
