@@ -1,15 +1,21 @@
 ---
-title: "StrokeData"
-author: "Evan Jiang"
-date: "3/29/2021"
-output: html_document
+title: "Predicting Stroke"
+author: "Evan Jiang, Anthony Zhao, Jenny Yu, Xincheng Yuan, Yusuf Uzhunnan"
+date: "4/25/2021"
+output: 
+  html_document:
+      toc: true
+      toc_float: true
+      theme: readable
+      highlight: tango
+      code_folding: show
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
+## Load in Data
 ```{r}
 stroke <- read.csv("healthcare-dataset-stroke-data.csv")
 stroke <- stroke[stroke$gender != "Other",]
@@ -20,7 +26,11 @@ stroke$smoking_status <- as.factor(stroke$smoking_status)
 stroke$ever_married <- as.factor(stroke$ever_married)
 stroke$Residence_type <- as.factor(stroke$Residence_type)
 summary(stroke)
+```
 
+
+## Create Linear Model to Predict Missing BMI
+```{r}
 # create the bmi data that doesn't have NA
 bmi_data <- stroke[stroke$bmi != "N/A",]
 # can't use stroke to predict bmi
@@ -32,7 +42,10 @@ summary(bmi_model)
 
 stroke$bmi[stroke$bmi == "N/A"] = predict(bmi_model, stroke[stroke$bmi == "N/A",])
 stroke$bmi <- as.numeric(stroke$bmi)
+```
 
+### Define Helper Functions
+```{r}
 set.seed(42)
 
 normalize <- function(x) {
@@ -49,7 +62,46 @@ set_splits <- function(x, norm) {
   testrows <- sample(1:nrow(x), 0.25*nrow(x))
   return (list(x[-testrows,], x[testrows,]))
 }
+```
 
+## Visualizations
+```{r}
+par(mfrow=c(2,2))
+barplot(prop.table(table(stroke$stroke, stroke$gender), 2), main="Gender vs Stroke", xlab="Gender", col=c("darkblue","red"))
+barplot(prop.table(table(stroke$stroke, stroke$hypertension), 2), main="Hypertension vs Stroke", xlab="Hypertension", col=c("darkblue","red"))
+barplot(prop.table(table(stroke$stroke, stroke$heart_disease), 2), main="Heart Disease vs Stroke", xlab="Heart Disease", col=c("darkblue","red"))
+barplot(prop.table(table(stroke$stroke, stroke$ever_married), 2), main="Marriage vs Stroke", xlab="Marriage", col=c("darkblue","red"))
+par(mfrow=c(2,2))
+barplot(prop.table(table(stroke$stroke, stroke$work_type), 2), main="Work vs Stroke", xlab="Work", col=c("darkblue","red"))
+barplot(prop.table(table(stroke$stroke, stroke$Residence_type), 2), main="Residence vs Stroke", xlab="Residence Type", col=c("darkblue","red"))
+barplot(prop.table(table(stroke$stroke, stroke$smoking_status), 2), main="Smoker vs Stroke", xlab="Smoking Status", col=c("darkblue","red"))
+library(lsr)
+barplot(prop.table(table(stroke$stroke, quantileCut(stroke$age, 10)), 2), main="Age vs Stroke", xlab="Age", col=c("darkblue","red"))
+par(mfrow=c(2,2))
+barplot(prop.table(table(stroke$stroke, quantileCut(stroke$bmi, 10)), 2), main="BMI vs Stroke", xlab="BMI", col=c("darkblue","red"))
+barplot(prop.table(table(stroke$stroke, quantileCut(stroke$avg_glucose_level, 10)), 2), main="Glucose vs Stroke", xlab="Glucose Level", col=c("darkblue","red"))
+```
+
+
+### Inter-Variable Visualization
+```{r}
+prop.table(table(stroke$ever_married, stroke$hypertension), 1)
+prop.table(table(stroke$ever_married, stroke$heart_disease), 1)
+prop.table(table(stroke$hypertension, stroke$heart_disease), 1)
+par(mfrow=c(2,2))
+barplot(prop.table(table(stroke$ever_married, quantileCut(stroke$age, 10)), 2), main="Age vs Marriage", xlab="Age", col=c("darkblue","red"))
+barplot(prop.table(table(stroke$hypertension, quantileCut(stroke$age, 10)), 2), main="Age vs Hypertension", xlab="Age", col=c("darkblue","red"))
+barplot(prop.table(table(stroke$heart_disease, quantileCut(stroke$age, 10)), 2), main="Age vs Heart Disease", xlab="Age", col=c("darkblue","red"))
+par(mfrow=c(2,2))
+barplot(prop.table(table(stroke$heart_disease[stroke$ever_married=="Yes"], cut(stroke$age[stroke$ever_married=="Yes"], breaks = c(0,10,20,30,40,50,60,70,80,90))), 2), main="Age vs Heart Disease for Married", xlab="Age", col=c("darkblue","red"))
+barplot(prop.table(table(stroke$heart_disease[stroke$ever_married=="No"], cut(stroke$age[stroke$ever_married=="No"], breaks = c(0,10,20,30,40,50,60,70,80,90))), 2), main="Age vs Heart Disease for Unmarried", xlab="Age", col=c("darkblue","red"))
+barplot(prop.table(table(stroke$hypertension[stroke$ever_married=="Yes"], cut(stroke$age[stroke$ever_married=="Yes"], breaks = c(0,10,20,30,40,50,60,70,80,90))), 2), main="Age vs Hypertension for Married", xlab="Age", col=c("darkblue","red"))
+barplot(prop.table(table(stroke$hypertension[stroke$ever_married=="No"], cut(stroke$age[stroke$ever_married=="No"], breaks = c(0,10,20,30,40,50,60,70,80,90))), 2), main="Age vs Hypertension for Unmarried", xlab="Age", col=c("darkblue","red"))
+
+```
+
+## Create Splits
+```{r}
 general_norm <- set_splits(stroke, norm = TRUE)
 age_young_data_norm = set_splits(stroke[stroke$age<=55,], norm = TRUE)
 age_old_data_norm = set_splits(stroke[stroke$age>55,], norm = TRUE)
@@ -57,7 +109,50 @@ bmi_risk_data_norm = set_splits(stroke[stroke$bmi>26.5 & stroke$bmi<32,], norm =
 bmi_safe_data_norm = set_splits(stroke[stroke$bmi<=26.5 | stroke$bmi>=32,], norm = TRUE)
 ```
 
+## SVM Model
+```{r}
+library(kernlab)
+stroke_svm <- ksvm(stroke ~ ., data = general_norm[[1]], kernel = "rbfdot")
+svm_pred <- predict(stroke_svm, general_norm[[2]])
+cutoff = quantile(svm_pred, 1-mean(general_norm[[1]]$stroke))
+svm_pred = ifelse(svm_pred>cutoff, 1, 0)
+library(caret)
+confusionMatrix(as.factor(svm_pred), as.factor(general_norm[[2]]$stroke))
+```
 
+### Age Based Model
+```{r}
+# first is young model
+young_svm <- ksvm(stroke ~ ., data = age_young_data_norm[[1]], kernel = "rbfdot")
+young_pred <- predict(young_svm, age_young_data_norm[[2]])
+cutoff = quantile(young_pred, 1-mean(age_young_data_norm[[1]]$stroke))
+young_pred = ifelse(young_pred>cutoff, 1, 0)
+# now old model
+old_svm <- ksvm(stroke ~ ., data = age_old_data_norm[[1]], kernel = "rbfdot")
+old_pred <- predict(old_svm, age_old_data_norm[[2]])
+cutoff = quantile(old_pred, 1-mean(age_old_data_norm[[1]]$stroke))
+old_pred = ifelse(old_pred>cutoff, 1, 1)
 
+# now combine them together
+combined_pred = c(young_pred, old_pred)
+# get the true labels
+true_label = c(age_young_data_norm[[2]]$stroke, age_old_data_norm[[2]]$stroke)
+confusionMatrix(as.factor(combined_pred), as.factor(true_label))
+```
 
+### BMI Based Model
+```{r}
+risk_svm <- ksvm(stroke ~ ., data = bmi_risk_data_norm[[1]], kernel = "rbfdot")
+risk_pred <- predict(risk_svm, bmi_risk_data_norm[[2]])
+cutoff = quantile(risk_pred, 1-mean(bmi_risk_data_norm[[1]]$stroke))
+risk_pred = ifelse(risk_pred>cutoff, 1, 0)
 
+safe_svm <- ksvm(stroke ~ ., data = bmi_safe_data_norm[[1]], kernel = "rbfdot")
+safe_pred <- predict(safe_svm, bmi_safe_data_norm[[2]])
+cutoff = quantile(safe_pred, 1-mean(bmi_safe_data_norm[[1]]$stroke))
+safe_pred = ifelse(safe_pred>cutoff, 1, 0)
+
+combined_pred = c(risk_pred, safe_pred)
+true_label = c(bmi_risk_data_norm[[2]]$stroke, bmi_safe_data_norm[[2]]$stroke)
+confusionMatrix(as.factor(combined_pred), as.factor(true_label))
+```
