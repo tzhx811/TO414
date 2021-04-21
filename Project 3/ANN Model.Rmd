@@ -73,7 +73,7 @@ bmi_safe_data_norm = set_splits(stroke[stroke$bmi<=26.5 | stroke$bmi>=32,], norm
 ```{r cache = TRUE}
 
 library(neuralnet)
-ANNmodel <- neuralnet(general_norm[[1]]$stroke ~ ., data=general_norm[[1]],hidden =2)
+ANNmodel <- neuralnet(general_norm[[1]]$stroke ~ ., data=general_norm[[1]],hidden =2, stepmax = 1000000)
 plot(ANNmodel, rep = "best")
 ```
 
