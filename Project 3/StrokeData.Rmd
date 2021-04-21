@@ -19,30 +19,41 @@ stroke$work_type <- as.factor(stroke$work_type)
 stroke$smoking_status <- as.factor(stroke$smoking_status)
 stroke$ever_married <- as.factor(stroke$ever_married)
 stroke$Residence_type <- as.factor(stroke$Residence_type)
-stroke$heart_disease <- as.factor(stroke$heart_disease)
+summary(stroke)
+
+# create the bmi data that doesn't have NA
+bmi_data <- stroke[stroke$bmi != "N/A",]
+# can't use stroke to predict bmi
+bmi_model <- lm(bmi ~ .-stroke, data = bmi_data)
+summary(bmi_model)
+# remove insignificant variables
+bmi_model <- lm(bmi ~ .-stroke-gender-Residence_type+age*hypertension*ever_married-heart_disease, data = bmi_data)
+summary(bmi_model)
+
+stroke$bmi[stroke$bmi == "N/A"] = predict(bmi_model, stroke[stroke$bmi == "N/A",])
 stroke$bmi <- as.numeric(stroke$bmi)
 
-summary(stroke)
+set.seed(42)
+
 normalize <- function(x) {
+  if(max(x) - min(x) == 0){
+    return (x)
+  }
   return ((x - min(x)) / (max(x) - min(x)))
 }
 
-strokemm <- as.data.frame(model.matrix(~.-1,stroke))
-set.seed(12345)
-#25% ish in test, all others in train, for this choose round numbers - 1280 random in test, others in train
-testrows <- sample(1:nrow(strokemm),1280)
-stroketrain <- strokemm[-testrows, ]
-stroketest <- strokemm[testrows, ]
+set_splits <- function(x, norm) {
+  if(norm){
+    x = as.data.frame(lapply(as.data.frame(model.matrix(~.-1,x)), normalize))
+  }
+  testrows <- sample(1:nrow(x), 0.25*nrow(x))
+  return (list(x[-testrows,], x[testrows,]))
+}
 
-ageYoung <- stroketrain[stroketrain$age <= 55,]
-ageOld <- stroketrain[stroketrain$age > 55,]
-bmiRisk <- stroketrain[stroketrain$bmi > 26.5 & stroketrain$bmi < 32,]
-bmiNotRisk <- stroketrain[stroketrain$bmi <= 26.5 | stroketrain$bmi >= 32,]
-
-ageYoungNorm <- as.data.frame(lapply(ageYoung, normalize))
-ageOldNorm <- as.data.frame(lapply(ageOld, normalize))
-bmiRiskNorm <- as.data.frame(lapply(bmiRisk, normalize))
-bmiNotRiskNorm <- as.data.frame(lapply(bmiNotRisk, normalize))
-
+general_norm <- set_splits(stroke, norm = TRUE)
+age_young_data_norm = set_splits(stroke[stroke$age<=55,], norm = TRUE)
+age_old_data_norm = set_splits(stroke[stroke$age>55,], norm = TRUE)
+bmi_risk_data_norm = set_splits(stroke[stroke$bmi>26.5 & stroke$bmi<32,], norm = TRUE)
+bmi_safe_data_norm = set_splits(stroke[stroke$bmi<=26.5 | stroke$bmi>=32,], norm = TRUE)
 ```
 
