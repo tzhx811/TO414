@@ -72,7 +72,7 @@ bmi_safe_data_norm = set_splits(stroke[stroke$bmi<=26.5 | stroke$bmi>=32,], norm
 ```{r}
 library(C50)
 
-#rebalance errors - want to prioritize minimizing false negatives, if people are at risk of stroke we want to know 
+#rebalance errors - want to prioritize minimizing false negatives, if people are at risk of stroke we want to know, used 20 to make it about 20% of true positives show up as negatives 
 error_cost <- matrix(c(0, 1, 20, 0), nrow = 2)
 
 #build decision tree
