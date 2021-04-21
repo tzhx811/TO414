@@ -73,7 +73,7 @@ bmi_safe_data_norm = set_splits(stroke[stroke$bmi<=26.5 | stroke$bmi>=32,], norm
 ```{r cache = TRUE}
 
 library(neuralnet)
-ANNmodel <- neuralnet(general_norm[[1]]$stroke ~ ., data=general_norm[[1]],hidden =1)
+ANNmodel <- neuralnet(general_norm[[1]]$stroke ~ ., data=general_norm[[1]],hidden =2)
 plot(ANNmodel, rep = "best")
 ```
 
@@ -95,7 +95,7 @@ confusionMatrix(as.factor(predicted_stroke), as.factor(general_norm[[2]]$stroke)
 ## ANN by Age: Young
 ```{r cache = TRUE}
 #Build Model
-ANNyoungmodel <- neuralnet(age_young_data_norm[[1]]$stroke ~ ., data=age_young_data_norm[[1]],hidden =1)
+ANNyoungmodel <- neuralnet(age_young_data_norm[[1]]$stroke ~ ., data=age_young_data_norm[[1]],hidden =2)
 plot(ANNyoungmodel, rep = "best")
 ```
 
@@ -113,7 +113,7 @@ confusionMatrix(as.factor(predicted_strokeyoung), as.factor(age_young_data_norm[
 ## ANN by Age: Old
 ```{r cache = TRUE}
 #Build Model
-ANNoldmodel <- neuralnet(age_old_data_norm[[1]]$stroke ~ ., data=age_old_data_norm[[1]],hidden =1)
+ANNoldmodel <- neuralnet(age_old_data_norm[[1]]$stroke ~ ., data=age_old_data_norm[[1]],hidden =2)
 plot(ANNoldmodel, rep = "best")
 ```
 
@@ -131,7 +131,7 @@ confusionMatrix(as.factor(predicted_strokeold), as.factor(age_old_data_norm[[2]]
 ## ANN by BMI: Risky
 ```{r cache = TRUE}
 #Build Model
-ANNriskmodel <- neuralnet(bmi_risk_data_norm[[1]]$stroke ~ ., data=bmi_risk_data_norm[[1]],hidden =1)
+ANNriskmodel <- neuralnet(bmi_risk_data_norm[[1]]$stroke ~ ., data=bmi_risk_data_norm[[1]],hidden =2)
 plot(ANNriskmodel, rep = "best")
 ```
 
@@ -149,7 +149,7 @@ confusionMatrix(as.factor(predicted_strokerisk), as.factor(bmi_risk_data_norm[[2
 ## ANN by BMI: Safe
 ```{r cache = TRUE}
 #Build Model
-ANNsafemodel <- neuralnet(bmi_safe_data_norm[[1]]$stroke ~ ., data=bmi_safe_data_norm[[1]],hidden =1)
+ANNsafemodel <- neuralnet(bmi_safe_data_norm[[1]]$stroke ~ ., data=bmi_safe_data_norm[[1]],hidden =2)
 plot(ANNsafemodel, rep = "best")
 ```
 
