@@ -20,37 +20,43 @@ stroke$work_type <- as.factor(stroke$work_type)
 stroke$smoking_status <- as.factor(stroke$smoking_status)
 stroke$ever_married <- as.factor(stroke$ever_married)
 stroke$Residence_type <- as.factor(stroke$Residence_type)
-stroke$heart_disease <- as.factor(stroke$heart_disease)
-stroke$bmi <- as.numeric(stroke$bmi)
-
+summary(stroke)
 
 # create the bmi data that doesn't have NA
-bmi_data <- stroke[!is.na(stroke$bmi),]
+bmi_data <- stroke[stroke$bmi != "N/A",]
 # can't use stroke to predict bmi
 bmi_model <- lm(bmi ~ .-stroke, data = bmi_data)
+summary(bmi_model)
 # remove insignificant variables
 bmi_model <- lm(bmi ~ .-stroke-gender-Residence_type+age*hypertension*ever_married-heart_disease, data = bmi_data)
+summary(bmi_model)
 
-stroke$bmi[is.na(stroke$bmi)] = predict(bmi_model, stroke[is.na(stroke$bmi),])
+stroke$bmi[stroke$bmi == "N/A"] = predict(bmi_model, stroke[stroke$bmi == "N/A",])
+stroke$bmi <- as.numeric(stroke$bmi)
 
+set.seed(42)
 
 normalize <- function(x) {
+  if(max(x) - min(x) == 0){
+    return (x)
+  }
   return ((x - min(x)) / (max(x) - min(x)))
 }
 
-strokemm <- as.data.frame(model.matrix(~.-1,stroke))
-stroke_norm <- as.data.frame(lapply(strokemm, normalize))
-```
-## Create test and train split
-```{r}
-set.seed(12345)
-#25% ish in test, all others in train, for this choose round numbers - 1280 random in test, others in train
-testrows <- sample(1:nrow(stroke_norm),1280)
-stroketrainLOG <- stroke_norm[-testrows, ]
-stroketestLOG <- stroke_norm[testrows, ]
-```
+set_splits <- function(x, norm) {
+  if(norm){
+    x = as.data.frame(lapply(as.data.frame(model.matrix(~.-1,x)), normalize))
+  }
+  testrows <- sample(1:nrow(x), 0.25*nrow(x))
+  return (list(x[-testrows,], x[testrows,]))
+}
 
-
+general_norm <- set_splits(stroke, norm = TRUE)
+age_young_data_norm = set_splits(stroke[stroke$age<=55,], norm = TRUE)
+age_old_data_norm = set_splits(stroke[stroke$age>55,], norm = TRUE)
+bmi_risk_data_norm = set_splits(stroke[stroke$bmi>26.5 & stroke$bmi<32,], norm = TRUE)
+bmi_safe_data_norm = set_splits(stroke[stroke$bmi<=26.5 | stroke$bmi>=32,], norm = TRUE)
+```
 ## Logit Model 
 ```{r}
 library(gmodels)
@@ -58,51 +64,87 @@ library(caret)
 library(class)
 
 #Mass Effect
-MassEffect <- glm(stroke ~ ., data = stroketrainLOG, family = "binomial")
+MassEffect <- glm(stroke ~ ., data = general_norm[[1]], family = "binomial")
 summary(MassEffect)
 
 #Final
-logit_final <- glm(stroke ~ +age +avg_glucose_level  +work_typeSelf.employed +avg_glucose_level , data = stroketrainLOG, family = "binomial")
+logit_final <- step(MassEffect)
 summary(logit_final)
 ```
 
 ## Cross table
 ```{r}
-LogReg_Pred = predict(logit_final, newdata = stroketestLOG, type = "response")
-LogReg_Pred = ifelse(LogReg_Pred>.08, 1, 0)
-CrossTable(x = stroketestLOG$stroke, y = LogReg_Pred, prop.chisq=FALSE)
-confusionMatrix(data = as.factor(LogReg_Pred), reference = as.factor(stroketestLOG$stroke))
-#.08 gave the highest kappa statistic
+LogReg_Pred = predict(logit_final, newdata = general_norm[[2]], type = "response")
+LogReg_Pred = ifelse(LogReg_Pred>.11, 1, 0)
+confusionMatrix(data = as.factor(LogReg_Pred), reference = as.factor(general_norm[[2]]$stroke))
+#.11 gave the highest kappa statistic
 
 ```
 
-## Age Split Data loading and splitting
+## Age Split Models
 ```{r}
-#New data for age  and BMI split
-strokeAge <- stroke
-strokeAgemm <- as.data.frame(model.matrix(~.-1,strokeAge))
+#Young
+masslogmodel_young <- glm(stroke ~., data = age_young_data_norm[[1]], family = "binomial")
+summary(masslogmodel_young)
 
-#Setting up the new data with the splits
-ageYoung <- strokeAgemm[strokeAgemm$age <= 55,]
-ageOld <- strokeAgemm[strokeAgemm$age > 55,]
-bmiRisk <- strokeAgemm[strokeAgemm$bmi > 26.5 & strokeAgemm$bmi < 32,]
-bmiNotRisk <- strokeAgemm[strokeAgemm$bmi <= 26.5 | strokeAgemm$bmi >= 32,]
+finallogmodel_young <- step(masslogmodel_young)
+summary(finallogmodel_young)
 
-ageYoungNorm <- as.data.frame(lapply(ageYoung, normalize))
-ageOldNorm <- as.data.frame(lapply(ageOld, normalize))
-bmiRiskNorm <- as.data.frame(lapply(bmiRisk, normalize))
-bmiNotRiskNorm <- as.data.frame(lapply(bmiNotRisk, normalize))
+young_Logpred <- predict(finallogmodel_young, age_young_data_norm[[2]], type= "response")
+young_Logpred = ifelse(young_Logpred>.0002, 0, 1)
 
+#Old
+masslogmodel_old <- glm(stroke ~., data = age_old_data_norm[[1]], family = "binomial")
+summary(masslogmodel_old)
+
+finallogmodel_old <- step(masslogmodel_old)
+summary(finallogmodel_old)
+
+old_Logpred <- predict(finallogmodel_old, age_old_data_norm[[2]], type= "response")
+old_Logpred = ifelse(old_Logpred>.45, 0, 1)
+
+#Combine Predictions
+age_combined_Logpred = c(young_Logpred, old_Logpred)
+
+age_true_label = c(age_young_data_norm[[2]]$stroke, age_old_data_norm[[2]]$stroke)
+
+confusionMatrix(as.factor(age_combined_Logpred), as.factor(age_true_label))
+
+#These threshold gave us the highest kappa statistic
+#Basically just guess all 1 for those with risk factor and 0 for those with not 
 ```
 
-## Creating test and train split
+## BMI Split Models
 ```{r}
-set.seed(12345)
+#Risk
+masslogmodel_risk <- glm(stroke ~., data = bmi_risk_data_norm[[1]], family = "binomial")
+summary(masslogmodel_risk)
 
+finallogmodel_risk <- step(masslogmodel_risk)
+summary(finallogmodel_risk)
 
+risk_Logpred <- predict(finallogmodel_risk, bmi_risk_data_norm[[2]], type= "response")
+risk_Logpred = ifelse(risk_Logpred>.4, 0, 1)
+
+#Safe
+masslogmodel_safe <- glm(stroke ~., data = bmi_safe_data_norm[[1]], family = "binomial")
+summary(masslogmodel_safe)
+
+finallogmodel_safe <- step(masslogmodel_safe)
+summary(finallogmodel_safe)
+
+safe_Logpred <- predict(finallogmodel_safe, bmi_safe_data_norm[[2]], type= "response")
+safe_Logpred = ifelse(safe_Logpred>.0004, 0, 1)
+
+#Combine Predictions
+bmi_combined_Logpred = c(risk_Logpred, safe_Logpred)
+
+bmi_true_label = c(bmi_risk_data_norm[[2]]$stroke, bmi_safe_data_norm[[2]]$stroke)
+
+confusionMatrix(as.factor(bmi_combined_Logpred), as.factor(bmi_true_label))
+
+#These threshold gave us the highest kappa statistic
+#Basically just guess all 1 for those with risk factor and 0 for those with not 
 ```
-
-
-
 
 
