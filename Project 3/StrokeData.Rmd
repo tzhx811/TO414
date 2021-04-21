@@ -156,3 +156,94 @@ combined_pred = c(risk_pred, safe_pred)
 true_label = c(bmi_risk_data_norm[[2]]$stroke, bmi_safe_data_norm[[2]]$stroke)
 confusionMatrix(as.factor(combined_pred), as.factor(true_label))
 ```
+
+## Decision Tree
+```{r}
+library(C50)
+
+#rebalance errors - want to prioritize minimizing false negatives, if people are at risk of stroke we want to know, used 20 to make it about 20% of true positives show up as negatives 
+error_cost <- matrix(c(0, 1, 20, 0), nrow = 2)
+
+#build decision tree
+stroke_dt <- C5.0(as.factor(stroke) ~ ., data = general_norm[[1]], costs = error_cost)
+
+plot(stroke_dt)
+summary(stroke_dt)
+
+#predict the test data
+stroke_dt_pred <- predict(stroke_dt, general_norm[[2]])
+library(gmodels)
+CrossTable(general_norm[[2]]$stroke, stroke_dt_pred)
+
+# Confusion Matrix and Kappa Statistics
+
+library(caret)
+library(class)
+
+confusionMatrix(stroke_dt_pred, as.factor(general_norm[[2]]$stroke))
+```
+
+### Decision Trees Based On Age
+```{r}
+
+summary(age_old_data_norm[[1]])
+#Young Patients
+ageYoung_dt <- C5.0(as.factor(stroke) ~ ., data = age_young_data_norm[[1]], costs = error_cost)
+plot(ageYoung_dt)
+summary(ageYoung_dt)
+
+#predict the test data
+ageYoung_dt_pred <- predict(ageYoung_dt, age_young_data_norm[[2]])
+
+
+#Old Patients
+ageOld_dt <- C5.0(as.factor(stroke) ~ ., data = age_old_data_norm[[1]], costs = error_cost)
+plot(ageOld_dt)
+summary(ageOld_dt)
+
+#predict the test data
+ageOld_dt_pred <- predict(ageOld_dt, age_old_data_norm[[2]])
+
+
+#Combined confusion matrix
+combinedagepredict <- c(ageOld_dt_pred,ageYoung_dt_pred)-1
+summary(combinedagepredict)
+
+combinedageactual <- c(age_old_data_norm[[2]]$stroke, age_young_data_norm[[2]]$stroke)
+summary(combinedageactual)
+
+confusionMatrix(as.factor(combinedagepredict), as.factor(combinedageactual))
+```
+
+### Decision Trees Based on BMI
+```{r}
+# separate data for further insight
+
+#Risky BMI Patients
+
+bmiRisk_dt <- C5.0(as.factor(stroke) ~ ., data = bmi_risk_data_norm[[1]], costs = error_cost)
+plot(bmiRisk_dt)
+summary(bmiRisk_dt)
+
+#predict the test data
+bmiRisk_dt_pred <- predict(bmiRisk_dt, bmi_risk_data_norm[[2]])
+
+
+#Not Risky BMI Patients
+
+bmiNotRisk_dt <- C5.0(as.factor(stroke) ~ ., data = bmi_safe_data_norm[[1]], costs = error_cost)
+plot(bmiNotRisk_dt)
+summary(bmiNotRisk_dt)
+
+#predict the test data
+bmiNotRisk_dt_pred <- predict(bmiNotRisk_dt, bmi_safe_data_norm[[2]])
+
+#Combined confusion matrix
+combinedbmipredict <- c(bmiNotRisk_dt_pred,bmiRisk_dt_pred)-1
+summary(combinedbmipredict)
+
+combinedbmiactual <- c(bmi_safe_data_norm[[2]]$stroke, bmi_risk_data_norm[[2]]$stroke)
+summary(combinedbmiactual)
+
+confusionMatrix(as.factor(combinedbmipredict), as.factor(combinedbmiactual))
+```
