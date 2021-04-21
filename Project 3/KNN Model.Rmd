@@ -117,9 +117,9 @@ stroke_knn_pred_old <- knn(train = stroketrain_knn_old, test = stroketest_knn_ol
 confusionMatrix(as.factor(stroke_knn_pred_old), as.factor(knn_test_labels_old))
 
 ##Combined
-knn_age_combined_pred = c(stroke_knn_pred_young, stroke_knn_pred_old) 
+knn_age_combined_pred = c(stroke_knn_pred_young, stroke_knn_pred_old) - 1
 true_label_age = c(age_young_data_norm[[2]]$stroke, age_old_data_norm[[2]]$stroke)
-confusionMatrix(as.factor(knn_age_combined_pred), as.factor(true_label))
+confusionMatrix(as.factor(knn_age_combined_pred), as.factor(true_label_age))
 
 ```
 
@@ -149,7 +149,7 @@ stroke_knn_pred_safe <- knn(train = stroketrain_knn_safe, test = stroketest_knn_
 confusionMatrix(as.factor(stroke_knn_pred_safe), as.factor(knn_test_labels_safe))
 
 ##Combined
-knn_bmi_combined_pred = c(stroke_knn_pred_risk, stroke_knn_pred_safe)
+knn_bmi_combined_pred = c(stroke_knn_pred_risk, stroke_knn_pred_safe) - 1
 true_label_bmi = c(bmi_risk_data_norm[[2]]$stroke, bmi_safe_data_norm[[2]]$stroke)
-confusionMatrix(as.factor(knn_bmi_combined_pred), as.factor(true_label))
+confusionMatrix(as.factor(knn_bmi_combined_pred), as.factor(true_label_bmi))
 ```

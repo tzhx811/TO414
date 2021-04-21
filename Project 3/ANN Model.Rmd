@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
 ```{r}
 stroke <- read.csv("healthcare-dataset-stroke-data.csv")
 stroke <- stroke[stroke$gender != "Other",]
@@ -18,49 +19,147 @@ stroke$work_type <- as.factor(stroke$work_type)
 stroke$smoking_status <- as.factor(stroke$smoking_status)
 stroke$ever_married <- as.factor(stroke$ever_married)
 stroke$Residence_type <- as.factor(stroke$Residence_type)
-stroke$heart_disease <- as.factor(stroke$heart_disease)
+summary(stroke)
+
+# create the bmi data that doesn't have NA
+bmi_data <- stroke[stroke$bmi != "N/A",]
+# can't use stroke to predict bmi
+bmi_model <- lm(bmi ~ .-stroke, data = bmi_data)
+summary(bmi_model)
+# remove insignificant variables
+bmi_model <- lm(bmi ~ .-stroke-gender-Residence_type+age*hypertension*ever_married-heart_disease, data = bmi_data)
+summary(bmi_model)
+
+stroke$bmi[stroke$bmi == "N/A"] = predict(bmi_model, stroke[stroke$bmi == "N/A",])
 stroke$bmi <- as.numeric(stroke$bmi)
 
-summary(stroke)
+###################################### Define some functions
+set.seed(42)
+
 normalize <- function(x) {
+  if(max(x) - min(x) == 0){
+    return (x)
+  }
   return ((x - min(x)) / (max(x) - min(x)))
 }
 
-strokemm <- as.data.frame(model.matrix(~.-1,stroke))
-stroke_norm <- as.data.frame(lapply(strokemm, normalize))
-summary(stroke_norm)
+set_splits <- function(x, norm) {
+  if(norm){
+    x = as.data.frame(lapply(as.data.frame(model.matrix(~.-1,x)), normalize))
+  }
+  testrows <- sample(1:nrow(x), 0.25*nrow(x))
+  return (list(x[-testrows,], x[testrows,]))
+}
+
+# Now create all splits w/o norm and one hot encoding
+
+# you can access the dataframe with age_young_data[[1]] for train, age_young_data[[2]] for test
+general <- set_splits(stroke, norm = FALSE)
+age_young_data = set_splits(stroke[stroke$age<=55,], norm = FALSE)
+age_old_data = set_splits(stroke[stroke$age>55,], norm = FALSE)
+bmi_risk_data = set_splits(stroke[stroke$bmi>26.5 & stroke$bmi<32,], norm = FALSE)
+bmi_safe_data = set_splits(stroke[stroke$bmi<=26.5 | stroke$bmi>=32,], norm = FALSE)
+
+# alternatively do it with the norm; you'll only need one of the splits
+general_norm <- set_splits(stroke, norm = TRUE)
+age_young_data_norm = set_splits(stroke[stroke$age<=55,], norm = TRUE)
+age_old_data_norm = set_splits(stroke[stroke$age>55,], norm = TRUE)
+bmi_risk_data_norm = set_splits(stroke[stroke$bmi>26.5 & stroke$bmi<32,], norm = TRUE)
+bmi_safe_data_norm = set_splits(stroke[stroke$bmi<=26.5 | stroke$bmi>=32,], norm = TRUE)
 ```
 
-##ANN Model
-```{r}
-set.seed(12345)
-testrows_ann <- sample(1:nrow(stroke_norm), 150) 
-stroketrain_ann <- stroke_norm[-testrows_ann, ]
-stroketrain_ann$stroke <- NULL
-stroketest_ann <- stroke_norm[testrows_ann, ]
 
-ann_train_labels <- stroke_norm[-testrows_ann, "stroke"]
-ann_test_labels <- stroke_norm[testrows_ann, "stroke"]
+##ANN Model
+```{r cache = TRUE}
 
 library(neuralnet)
-ANNmodel <- neuralnet(ann_train_labels ~ ., data=stroketrain_ann,hidden = 2, stepmax = 100000000)
+ANNmodel <- neuralnet(general_norm[[1]]$stroke ~ ., data=general_norm[[1]],hidden =2)
 plot(ANNmodel, rep = "best")
 ```
 
-```{r}
+```{r cache = TRUE}
 # obtain model results
-ann_results <- compute(ANNmodel, stroketest_ann)
+ann_results <- compute(ANNmodel, general_norm[[2]])
 predicted_stroke <- ann_results$net.result
 predicted_stroke <- ifelse(predicted_stroke >= 0.5, 1,0)
-# Crosstable
-library(gmodels)
-CrossTable(x = ann_test_labels, y = predicted_stroke, 
-           prop.chisq=FALSE)
+
 
 library(caret)
 library(class)
 
-confusionMatrix(as.factor(predicted_stroke), as.factor(stroketest_ann$stroke))
+confusionMatrix(as.factor(predicted_stroke), as.factor(general_norm[[2]]$stroke))
 
+
+```
+
+## ANN by Age: Young
+```{r cache = TRUE}
+#Build Model
+ANNyoungmodel <- neuralnet(age_young_data_norm[[1]]$stroke ~ ., data=age_young_data_norm[[1]],hidden =2)
+plot(ANNyoungmodel, rep = "best")
+```
+
+```{r cache = TRUE}
+# obtain model results
+annageyoung_results <- compute(ANNyoungmodel, age_young_data_norm[[2]])
+predicted_strokeyoung <- annageyoung_results$net.result
+predicted_strokeyoung <- ifelse(predicted_strokeyoung >= 0.5, 1,0)
+
+# Accuracy, Kappa, etc.
+confusionMatrix(as.factor(predicted_strokeyoung), as.factor(age_young_data_norm[[2]]$stroke))
+
+```
+
+## ANN by Age: Old
+```{r cache = TRUE}
+#Build Model
+ANNoldmodel <- neuralnet(age_old_data_norm[[1]]$stroke ~ ., data=age_old_data_norm[[1]],hidden =2)
+plot(ANNoldmodel, rep = "best")
+```
+
+```{r cache = TRUE}
+# obtain model results
+annageold_results <- compute(ANNoldmodel, age_old_data_norm[[2]])
+predicted_strokeold <- annageold_results$net.result
+predicted_strokeold <- ifelse(predicted_strokeold >= 0.5, 1,0)
+
+# Accuracy, Kappa, etc.
+confusionMatrix(as.factor(predicted_strokeold), as.factor(age_old_data_norm[[2]]$stroke))
+
+```
+
+## ANN by BMI: Risky
+```{r cache = TRUE}
+#Build Model
+ANNriskmodel <- neuralnet(bmi_risk_data_norm[[1]]$stroke ~ ., data=bmi_risk_data_norm[[1]],hidden =2)
+plot(ANNriskmodel, rep = "best")
+```
+
+```{r cache = TRUE}
+# obtain model results
+annbmirisk_results <- compute(ANNriskmodel, bmi_risk_data_norm[[2]])
+predicted_strokerisk <- annbmirisk_results$net.result
+predicted_strokerisk <- ifelse(predicted_strokerisk >= 0.5, 1,0)
+
+# Accuracy, Kappa, etc.
+confusionMatrix(as.factor(predicted_strokerisk), as.factor(bmi_risk_data_norm[[2]]$stroke))
+
+```
+
+## ANN by BMI: Safe
+```{r cache = TRUE}
+#Build Model
+ANNsafemodel <- neuralnet(bmi_safe_data_norm[[1]]$stroke ~ ., data=bmi_safe_data_norm[[1]],hidden =2)
+plot(ANNsafemodel, rep = "best")
+```
+
+```{r cache = TRUE}
+# obtain model results
+annbmisafe_results <- compute(ANNsafemodel, bmi_safe_data_norm[[2]])
+predicted_strokesafe <- annbmisafe_results$net.result
+predicted_strokesafe <- ifelse(predicted_strokesafe >= 0.5, 1,0)
+
+# Accuracy, Kappa, etc.
+confusionMatrix(as.factor(predicted_strokesafe), as.factor(bmi_safe_data_norm[[2]]$stroke))
 
 ```
