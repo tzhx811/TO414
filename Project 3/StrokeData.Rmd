@@ -15,6 +15,22 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
+## Library Loading
+```{r}
+library(C50)
+library(class)
+library(gmodels)
+library(caret)
+library(lmtest)
+library(aod)
+library(VGAM)
+library(neuralnet)
+library(kernlab)
+library(lsr)
+```
+
+
 ## Load in Data
 ```{r}
 stroke <- read.csv("healthcare-dataset-stroke-data.csv")
@@ -75,7 +91,6 @@ par(mfrow=c(2,2))
 barplot(prop.table(table(stroke$stroke, stroke$work_type), 2), main="Work vs Stroke", xlab="Work", col=c("darkblue","red"))
 barplot(prop.table(table(stroke$stroke, stroke$Residence_type), 2), main="Residence vs Stroke", xlab="Residence Type", col=c("darkblue","red"))
 barplot(prop.table(table(stroke$stroke, stroke$smoking_status), 2), main="Smoker vs Stroke", xlab="Smoking Status", col=c("darkblue","red"))
-library(lsr)
 barplot(prop.table(table(stroke$stroke, quantileCut(stroke$age, 10)), 2), main="Age vs Stroke", xlab="Age", col=c("darkblue","red"))
 par(mfrow=c(2,2))
 barplot(prop.table(table(stroke$stroke, quantileCut(stroke$bmi, 10)), 2), main="BMI vs Stroke", xlab="BMI", col=c("darkblue","red"))
@@ -111,16 +126,14 @@ bmi_safe_data_norm = set_splits(stroke[stroke$bmi<=26.5 | stroke$bmi>=32,], norm
 
 ## SVM Model
 ```{r}
-library(kernlab)
 stroke_svm <- ksvm(stroke ~ ., data = general_norm[[1]], kernel = "rbfdot")
 svm_pred <- predict(stroke_svm, general_norm[[2]])
 cutoff = quantile(svm_pred, 1-mean(general_norm[[1]]$stroke))
 svm_pred = ifelse(svm_pred>cutoff, 1, 0)
-library(caret)
 confusionMatrix(as.factor(svm_pred), as.factor(general_norm[[2]]$stroke))
 ```
 
-### Age Based Model
+### SVM Age Based Model
 ```{r}
 # first is young model
 young_svm <- ksvm(stroke ~ ., data = age_young_data_norm[[1]], kernel = "rbfdot")
@@ -140,7 +153,7 @@ true_label = c(age_young_data_norm[[2]]$stroke, age_old_data_norm[[2]]$stroke)
 confusionMatrix(as.factor(combined_pred), as.factor(true_label))
 ```
 
-### BMI Based Model
+### SVM BMI Based Model
 ```{r}
 risk_svm <- ksvm(stroke ~ ., data = bmi_risk_data_norm[[1]], kernel = "rbfdot")
 risk_pred <- predict(risk_svm, bmi_risk_data_norm[[2]])
@@ -159,7 +172,6 @@ confusionMatrix(as.factor(combined_pred), as.factor(true_label))
 
 ## Decision Tree
 ```{r}
-library(C50)
 
 #rebalance errors - want to prioritize minimizing false negatives, if people are at risk of stroke we want to know, used 20 to make it about 20% of true positives show up as negatives 
 error_cost <- matrix(c(0, 1, 20, 0), nrow = 2)
@@ -172,18 +184,15 @@ summary(stroke_dt)
 
 #predict the test data
 stroke_dt_pred <- predict(stroke_dt, general_norm[[2]])
-library(gmodels)
 CrossTable(general_norm[[2]]$stroke, stroke_dt_pred)
 
 # Confusion Matrix and Kappa Statistics
 
-library(caret)
-library(class)
 
 confusionMatrix(stroke_dt_pred, as.factor(general_norm[[2]]$stroke))
 ```
 
-### Decision Trees Based On Age
+### Decision Trees Age Based Model
 ```{r}
 
 summary(age_old_data_norm[[1]])
@@ -215,7 +224,7 @@ summary(combinedageactual)
 confusionMatrix(as.factor(combinedagepredict), as.factor(combinedageactual))
 ```
 
-### Decision Trees Based on BMI
+### Decision Trees BMI Based Model
 ```{r}
 # separate data for further insight
 
@@ -246,4 +255,153 @@ combinedbmiactual <- c(bmi_safe_data_norm[[2]]$stroke, bmi_risk_data_norm[[2]]$s
 summary(combinedbmiactual)
 
 confusionMatrix(as.factor(combinedbmipredict), as.factor(combinedbmiactual))
+```
+
+## KNN Model
+```{r}
+set.seed(12345)
+stroketrain_knn <- general_norm[[1]]
+stroketest_knn <- general_norm[[2]]
+
+knn_train_labels <- general_norm[[1]]$stroke
+knn_test_labels <- general_norm[[2]]$stroke
+
+stroke_knn_test_pred <- knn(train = stroketrain_knn, test = stroketest_knn,
+                      cl = knn_train_labels, k= sqrt(sqrt(nrow(general_norm[[1]]))))
+
+confusionMatrix(as.factor(stroke_knn_test_pred), as.factor(knn_test_labels))
+```
+
+### KNN Model Age Based Model
+```{r}
+###Young patients
+stroketrain_knn_young <- age_young_data_norm[[1]]
+stroketest_knn_young <- age_young_data_norm[[2]]
+knn_train_labels_young <- age_young_data_norm[[1]]$stroke
+knn_test_labels_young <- age_young_data_norm[[2]]$stroke
+
+stroke_knn_pred_young <- knn(train = stroketrain_knn_young, test = stroketest_knn_young,
+                      cl = knn_train_labels_young, k= sqrt(sqrt(nrow(stroketrain_knn_young))))
+confusionMatrix(as.factor(stroke_knn_pred_young), as.factor(knn_test_labels_young))
+
+###Old patients
+stroketrain_knn_old <- age_old_data_norm[[1]]
+stroketest_knn_old <- age_old_data_norm[[2]]
+knn_train_labels_old <- age_old_data_norm[[1]]$stroke
+knn_test_labels_old <- age_old_data_norm[[2]]$stroke
+
+stroke_knn_pred_old <- knn(train = stroketrain_knn_old, test = stroketest_knn_old,
+                      cl = knn_train_labels_old, k = sqrt(sqrt(nrow(stroketrain_knn_old))))
+confusionMatrix(as.factor(stroke_knn_pred_old), as.factor(knn_test_labels_old))
+
+##Combined
+knn_age_combined_pred = c(stroke_knn_pred_young, stroke_knn_pred_old) - 1
+true_label_age = c(age_young_data_norm[[2]]$stroke, age_old_data_norm[[2]]$stroke)
+confusionMatrix(as.factor(knn_age_combined_pred), as.factor(true_label_age))
+```
+
+### KNN Model BMI Based Model
+```{r}
+###Risky patients
+stroketrain_knn_risk <- bmi_risk_data_norm[[1]]
+stroketest_knn_risk <- bmi_risk_data_norm[[2]]
+knn_train_labels_risk <- bmi_risk_data_norm[[1]]$stroke
+knn_test_labels_risk <- bmi_risk_data_norm[[2]]$stroke
+
+stroke_knn_pred_risk <- knn(train = stroketrain_knn_risk, test = stroketest_knn_risk,
+                      cl = knn_train_labels_risk, k= sqrt(sqrt(nrow(stroketrain_knn_risk))))
+confusionMatrix(as.factor(stroke_knn_pred_risk), as.factor(knn_test_labels_risk))
+
+###Safe patients
+stroketrain_knn_safe <- bmi_safe_data_norm[[1]]
+stroketest_knn_safe <- bmi_safe_data_norm[[2]]
+knn_train_labels_safe <- bmi_safe_data_norm[[1]]$stroke
+knn_test_labels_safe <- bmi_safe_data_norm[[2]]$stroke
+
+stroke_knn_pred_safe <- knn(train = stroketrain_knn_safe, test = stroketest_knn_safe,
+                      cl = knn_train_labels_safe, k = sqrt(sqrt(nrow(stroketrain_knn_safe))))
+confusionMatrix(as.factor(stroke_knn_pred_safe), as.factor(knn_test_labels_safe))
+
+##Combined
+knn_bmi_combined_pred = c(stroke_knn_pred_risk, stroke_knn_pred_safe) - 1
+true_label_bmi = c(bmi_risk_data_norm[[2]]$stroke, bmi_safe_data_norm[[2]]$stroke)
+confusionMatrix(as.factor(knn_bmi_combined_pred), as.factor(true_label_bmi))
+```
+
+## Logistic Regression Model
+```{r}
+#Mass Effect
+MassEffect <- glm(stroke ~ ., data = general_norm[[1]], family = "binomial")
+summary(MassEffect)
+
+#Final
+logit_final <- step(MassEffect)
+summary(logit_final)
+
+#Confusion Matrix (.11 gave the highest kappa statistic)
+LogReg_Pred = predict(logit_final, newdata = general_norm[[2]], type = "response")
+LogReg_Pred = ifelse(LogReg_Pred>.11, 1, 0)
+confusionMatrix(data = as.factor(LogReg_Pred), reference = as.factor(general_norm[[2]]$stroke))
+```
+
+### Logistic Regression Age Based Model
+```{r}
+#Young
+masslogmodel_young <- glm(stroke ~., data = age_young_data_norm[[1]], family = "binomial")
+summary(masslogmodel_young)
+
+finallogmodel_young <- step(masslogmodel_young)
+summary(finallogmodel_young)
+
+young_Logpred <- predict(finallogmodel_young, age_young_data_norm[[2]], type= "response")
+young_Logpred = ifelse(young_Logpred>.0002, 0, 1)
+
+#Old
+masslogmodel_old <- glm(stroke ~., data = age_old_data_norm[[1]], family = "binomial")
+summary(masslogmodel_old)
+
+finallogmodel_old <- step(masslogmodel_old)
+summary(finallogmodel_old)
+
+old_Logpred <- predict(finallogmodel_old, age_old_data_norm[[2]], type= "response")
+old_Logpred = ifelse(old_Logpred>.45, 0, 1)
+
+#Combine Predictions (The thresholds above gave us the highest kappa statistic)
+age_combined_Logpred = c(young_Logpred, old_Logpred)
+
+age_true_label = c(age_young_data_norm[[2]]$stroke, age_old_data_norm[[2]]$stroke)
+
+confusionMatrix(as.factor(age_combined_Logpred), as.factor(age_true_label))
+
+
+```
+
+### Logistic Regression BMI Based Models
+```{r}
+#Risk
+masslogmodel_risk <- glm(stroke ~., data = bmi_risk_data_norm[[1]], family = "binomial")
+summary(masslogmodel_risk)
+
+finallogmodel_risk <- step(masslogmodel_risk)
+summary(finallogmodel_risk)
+
+risk_Logpred <- predict(finallogmodel_risk, bmi_risk_data_norm[[2]], type= "response")
+risk_Logpred = ifelse(risk_Logpred>.4, 0, 1)
+
+#Safe
+masslogmodel_safe <- glm(stroke ~., data = bmi_safe_data_norm[[1]], family = "binomial")
+summary(masslogmodel_safe)
+
+finallogmodel_safe <- step(masslogmodel_safe)
+summary(finallogmodel_safe)
+
+safe_Logpred <- predict(finallogmodel_safe, bmi_safe_data_norm[[2]], type= "response")
+safe_Logpred = ifelse(safe_Logpred>.0004, 0, 1)
+
+#Combine Predictions (The thresholds above gave us the highest kappa statistic)
+bmi_combined_Logpred = c(risk_Logpred, safe_Logpred)
+
+bmi_true_label = c(bmi_risk_data_norm[[2]]$stroke, bmi_safe_data_norm[[2]]$stroke)
+
+confusionMatrix(as.factor(bmi_combined_Logpred), as.factor(bmi_true_label))
 ```

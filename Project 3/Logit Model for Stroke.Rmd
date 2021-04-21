@@ -72,7 +72,7 @@ logit_final <- step(MassEffect)
 summary(logit_final)
 ```
 
-## Cross table
+## Confusion Matrix
 ```{r}
 LogReg_Pred = predict(logit_final, newdata = general_norm[[2]], type = "response")
 LogReg_Pred = ifelse(LogReg_Pred>.11, 1, 0)
@@ -144,7 +144,6 @@ bmi_true_label = c(bmi_risk_data_norm[[2]]$stroke, bmi_safe_data_norm[[2]]$strok
 confusionMatrix(as.factor(bmi_combined_Logpred), as.factor(bmi_true_label))
 
 #These threshold gave us the highest kappa statistic
-#Basically just guess all 1 for those with risk factor and 0 for those with not 
 ```
 
 
