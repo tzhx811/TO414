@@ -589,6 +589,18 @@ confusionMatrix(stacked_bmi_dt_pred, as.factor(stackedbmitest$Stroke))
 
 ## Stacked Model Improvement
 ```{r}
+set.seed(42)
+
+#Adding Customization Packages
+ctrl <- trainControl(method = "cv", number = 10,
+                     selectionFunction = "oneSE")
+
+grid <- expand.grid(.model = "tree",
+                    .trials = c(1,5,10,15,20,30),
+                    .winnow = "FALSE")
+
+#Tune the model
+TunedStackMod <- train(Stroke ~ ., data = stackedmodel, method = "C5.0")
 
 ```
 
