@@ -493,7 +493,7 @@ confusionMatrix(as.factor(combined_predbmi), as.factor(true_label))
 
 ## Stacked Model
 ```{r}
-stackedmodel = data.frame(decision_tree = stroke_dt_pred, ann = predicted_stroke, knn = stroke_knn_test_pred, logistic_reg = LogReg_Pred, svm = svm_pred, Stroke = general_norm[[2]]$stroke)
+stackedmodel = data.frame(decision_tree = stroke_dt_pred, ann = ann_predicted_stroke, knn = stroke_knn_test_pred, logistic_reg = LogReg_Pred, svm = svm_pred, Stroke = general_norm[[2]]$stroke)
 
 str(svm_pred)
 
