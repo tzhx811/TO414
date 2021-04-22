@@ -523,7 +523,7 @@ stacked_dt_pred <- predict(stacked_dt, stackedtest)
 confusionMatrix(stacked_dt_pred, as.factor(stackedtest$Stroke))
 ```
 
-### Stacked Model Age
+### Stacked Model Age Based Model
 ```{r}
 stackedmodelage = data.frame(decision_tree = combinedagepredict, ann = combined_predAge, knn = knn_age_combined_pred, logistic_reg = age_combined_Logpred, svm = combined_svmage_pred, Stroke = general_norm[[2]]$stroke)
 
@@ -555,7 +555,7 @@ stacked_age_dt_pred <- predict(stacked_age_dt, stackedagetest)
 confusionMatrix(stacked_age_dt_pred, as.factor(stackedagetest$Stroke))
 ```
 
-### Stacked Model BMI
+### Stacked Model BMI Based Model
 ```{r}
 stackedmodelbmi = data.frame(decision_tree = combinedbmipredict, ann = combined_predbmi, knn = knn_bmi_combined_pred, logistic_reg = bmi_combined_Logpred, svm = combined_svmbmipred, Stroke = general_norm[[2]]$stroke)
 
@@ -586,3 +586,9 @@ stacked_bmi_dt_pred <- predict(stacked_bmi_dt, stackedbmitest)
 #Evaluate prediction results
 confusionMatrix(stacked_bmi_dt_pred, as.factor(stackedbmitest$Stroke))
 ```
+
+## Stacked Model Improvement
+```{r}
+
+```
+
