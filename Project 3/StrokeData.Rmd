@@ -497,7 +497,7 @@ stackedmodel = data.frame(decision_tree = stroke_dt_pred, ann = ann_predicted_st
 
 str(svm_pred)
 
-set.seed(12345)
+set.seed(42)
 
 testrows <- sample(1:nrow(stackedmodel),950)
 stackedtrain <- stackedmodel[-testrows, ]
@@ -529,7 +529,7 @@ stackedmodelage = data.frame(decision_tree = combinedagepredict, ann = combined_
 
 str(stackedmodelage)
 
-set.seed(12345)
+set.seed(42)
 
 agetestrows <- sample(1:nrow(stackedmodelage),950)
 stackedagetrain <- stackedmodelage[-testrows, ]
@@ -561,7 +561,7 @@ stackedmodelbmi = data.frame(decision_tree = combinedbmipredict, ann = combined_
 
 str(stackedmodelbmi)
 
-set.seed(12345)
+set.seed(42)
 
 bmitestrows <- sample(1:nrow(stackedmodelbmi),950)
 stackedbmitrain <- stackedmodelbmi[-testrows, ]
