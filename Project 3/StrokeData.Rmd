@@ -14,6 +14,9 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+## Talk about business content (ie less flase negatives given death)
+## Mention that some models dont handle inbalanced data well and talk about why it is predicting all ones or zeros (ie smaller data whens split, age just doesnt see many strokes)
+
 ## Intro
 In this project, we are attempting to accurate predict if a patient will have a stroke or not based on input variables such as age, gender, BMI, hypertension, glucose level, etc. We were originally attracted to this data set because it involves discovering practical insights that might ultimately lead to saving someone's life. A stroke is a scary event for someone to go through, so by creating predictive models, we hope to get a better insight on not only which variables have the strongest effect on a patient's probability of having a stroke, but also which variables are most significant to target when trying to prevent a risk of stroke. While somewhat rare, the effects of having a stroke can be life-changing. We believe that there are two main business applications to this project. The first is the most obvious connection: saving lives. Whether it be a family medicine doctor or an emergency room respondent, knowing how certain variables interact with the chance of stroke can lead to better prescriptions, better service, and more lives saved. The second business application is less obvious, but still quite relevant: insurance agencies. Insurance agencies can take the information of the patient, input it into the models created, and see the chance of stroke that the client may have. This can go into their modeling of medical insurance packages as well as the the placement of the client within the packages' different level of coverage and risk premium. 
 <p> Next, we will start by loading and cleaning the data so it is prepared for analysis. From there, we will be creating different graphs and visuals to see if certain input variables interact with each other or have a stronger interaction force with the response variable (stroke or not). If any strong correlations are discovered from the data visualization section, we will take note and implement different train and test splits on top of our general models. After data visualization, we start to create the general models: SVM, Decision Tree, KNN, Logistic Regression, and ANN. Within each of these model chunks, we will create a final model that involves all the variables, but broken into a normalized train and test split, and a confusion matrix that compares the model's prediction to the test data. From there, we will also run more models and confusion matrices on different categorical splits. Some examples may be: married versus non-married, hypertension versus non-hypertension, whatever is discovered from the beginnings of our researching in data visualization. Ultimately, we will end with a stacked model that combines the predictions from our main general models and makes a prediction from those by assigning weights to the individual models' predictions. Once the stacked model is made, we will improve it using the train() command learned in class. This will be paired with a confusion matrix of which we can compare performance statistics between the individual models and the stacked model. We will end with a summary of our findings. 
@@ -600,7 +603,8 @@ grid <- expand.grid(.model = "tree",
                     .winnow = "FALSE")
 
 #Tune the model
-TunedStackMod <- train(Stroke ~ ., data = stackedmodel, method = "C5.0")
+TunedStackMod <- train(as.factor(Stroke) ~ ., data = stackedmodel, method = "C5.0")
+TunedStackMod
 
 ```
 
