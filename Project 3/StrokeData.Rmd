@@ -149,10 +149,10 @@ cutoff = quantile(old_pred, 1-mean(age_old_data_norm[[1]]$stroke))
 old_pred = ifelse(old_pred>cutoff, 1, 1)
 
 # now combine them together
-combined_pred = c(young_pred, old_pred)
+combined_svmage_pred = c(young_pred, old_pred)
 # get the true labels
 true_label = c(age_young_data_norm[[2]]$stroke, age_old_data_norm[[2]]$stroke)
-confusionMatrix(as.factor(combined_pred), as.factor(true_label))
+confusionMatrix(as.factor(combined_svmage_pred), as.factor(true_label))
 ```
 
 ### SVM BMI Based Model
@@ -167,9 +167,9 @@ safe_pred <- predict(safe_svm, bmi_safe_data_norm[[2]])
 cutoff = quantile(safe_pred, 1-mean(bmi_safe_data_norm[[1]]$stroke))
 safe_pred = ifelse(safe_pred>cutoff, 1, 0)
 
-combined_pred = c(risk_pred, safe_pred)
+combined_svmbmipred = c(risk_pred, safe_pred)
 true_label = c(bmi_risk_data_norm[[2]]$stroke, bmi_safe_data_norm[[2]]$stroke)
-confusionMatrix(as.factor(combined_pred), as.factor(true_label))
+confusionMatrix(as.factor(combined_svmbmipred), as.factor(true_label))
 ```
 
 ## Decision Tree
@@ -416,10 +416,10 @@ plot(ANNmodel, rep = "best")
 
 # obtain model results
 ann_results <- compute(ANNmodel, general_norm[[2]])
-predicted_stroke <- ann_results$net.result
-predicted_stroke <- ifelse(predicted_stroke >= 0.5, 1,0)
+ann_predicted_stroke <- ann_results$net.result
+ann_predicted_stroke <- ifelse(ann_predicted_stroke >= 0.5, 1,0)
 
-confusionMatrix(as.factor(predicted_stroke), as.factor(general_norm[[2]]$stroke))
+confusionMatrix(as.factor(ann_predicted_stroke), as.factor(general_norm[[2]]$stroke))
 
 
 ```
@@ -454,7 +454,7 @@ confusionMatrix(as.factor(predicted_strokeold), as.factor(age_old_data_norm[[2]]
 #Combined Model
 combined_predAge = c(predicted_strokeold, predicted_strokeyoung)
 true_label = c(age_old_data_norm[[2]]$stroke, age_young_data_norm[[2]]$stroke)
-confusionMatrix(as.factor(combined_pred), as.factor(true_label))
+confusionMatrix(as.factor(combined_predAge), as.factor(true_label))
 ```
 
 
@@ -493,6 +493,96 @@ confusionMatrix(as.factor(combined_predbmi), as.factor(true_label))
 
 ## Stacked Model
 ```{r}
+stackedmodel = data.frame(decision_tree = stroke_dt_pred, ann = predicted_stroke, knn = stroke_knn_test_pred, logistic_reg = LogReg_Pred, svm = svm_pred, Stroke = general_norm[[2]]$stroke)
 
+str(svm_pred)
+
+set.seed(12345)
+
+testrows <- sample(1:nrow(stackedmodel),950)
+stackedtrain <- stackedmodel[-testrows, ]
+stackedtest <- stackedmodel[testrows, ]
+
+stackedmodel$decision_tree <- as.numeric(stackedmodel$decision_tree)
+stackedmodel$knn <- as.numeric(stackedmodel$knn)
+
+str(stackedmodel)
+
+# Decision Tree based on Train and Test Split
+#build model
+
+stacked_dt <- C5.0(as.factor(Stroke) ~ ., data = stackedtrain, costs = error_cost)
+
+plot(stacked_dt)
+summary(stacked_dt)
+
+#predict the test data
+stacked_dt_pred <- predict(stacked_dt, stackedtest)
+
+#Evaluate prediction results
+confusionMatrix(stacked_dt_pred, as.factor(stackedtest$Stroke))
 ```
 
+### Stacked Model Age
+```{r}
+stackedmodelage = data.frame(decision_tree = combinedagepredict, ann = combined_predAge, knn = knn_age_combined_pred, logistic_reg = age_combined_Logpred, svm = combined_svmage_pred, Stroke = general_norm[[2]]$stroke)
+
+str(stackedmodelage)
+
+set.seed(12345)
+
+agetestrows <- sample(1:nrow(stackedmodelage),950)
+stackedagetrain <- stackedmodelage[-testrows, ]
+stackedagetest <- stackedmodelage[testrows, ]
+
+stackedmodelage$decision_tree <- as.numeric(stackedmodelage$decision_tree)
+stackedmodelage$knn <- as.numeric(stackedmodelage$knn)
+
+str(stackedmodelage)
+
+# Decision Tree based on Train and Test Split
+#build model
+
+stacked_age_dt <- C5.0(as.factor(Stroke) ~ ., data = stackedagetrain, costs = error_cost)
+
+plot(stacked_age_dt)
+summary(stacked_age_dt)
+
+#predict the test data
+stacked_age_dt_pred <- predict(stacked_age_dt, stackedagetest)
+
+#Evaluate prediction results
+confusionMatrix(stacked_age_dt_pred, as.factor(stackedagetest$Stroke))
+```
+
+### Stacked Model BMI
+```{r}
+stackedmodelbmi = data.frame(decision_tree = combinedbmipredict, ann = combined_predbmi, knn = knn_bmi_combined_pred, logistic_reg = bmi_combined_Logpred, svm = combined_svmbmipred, Stroke = general_norm[[2]]$stroke)
+
+str(stackedmodelbmi)
+
+set.seed(12345)
+
+bmitestrows <- sample(1:nrow(stackedmodelbmi),950)
+stackedbmitrain <- stackedmodelbmi[-testrows, ]
+stackedbmitest <- stackedmodelbmi[testrows, ]
+
+stackedmodelbmi$decision_tree <- as.numeric(stackedmodelbmi$decision_tree)
+stackedmodelbmi$knn <- as.numeric(stackedmodelbmi$knn)
+
+str(stackedmodelbmi)
+
+# Decision Tree based on Train and Test Split
+#build model
+
+stacked_bmi_dt <- C5.0(as.factor(Stroke) ~ ., data = stackedbmitrain, costs = error_cost)
+
+plot(stacked_bmi_dt)
+summary(stacked_bmi_dt)
+
+#predict the test data
+stacked_bmi_dt_pred <- predict(stacked_bmi_dt, stackedbmitest)
+
+#Evaluate prediction results
+confusionMatrix(stacked_bmi_dt_pred, as.factor(stackedbmitest$Stroke))
+```
