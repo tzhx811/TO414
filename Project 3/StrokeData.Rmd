@@ -165,7 +165,7 @@ young_pred = ifelse(young_pred>cutoff, 1, 0)
 old_svm <- ksvm(stroke ~ ., data = age_old_data_norm[[1]], kernel = "rbfdot")
 old_pred <- predict(old_svm, age_old_data_norm[[2]])
 cutoff = quantile(old_pred, 1-mean(age_old_data_norm[[1]]$stroke))
-old_pred = ifelse(old_pred>cutoff, 1, 1)
+old_pred = ifelse(old_pred>cutoff, 1, 0)
 
 # now combine them together
 combined_svmage_pred = c(young_pred, old_pred)
@@ -174,7 +174,7 @@ true_label = c(age_young_data_norm[[2]]$stroke, age_old_data_norm[[2]]$stroke)
 confusionMatrix(as.factor(combined_svmage_pred), as.factor(true_label))
 ```
 
-When we create two models based on age and combine their results, we can see that the kappa statistic increases to 0.1641, a lot higher than that of the general model.
+When we create two models based on age and combine their results, we can see that the kappa statistic increases to 0.1249, a lot higher than that of the general model.
 
 ### SVM BMI Based Model
 ```{r}
