@@ -14,14 +14,15 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-## Talk about business content (ie less flase negatives given death)
-## Mention that some models dont handle inbalanced data well and talk about why it is predicting all ones or zeros (ie smaller data whens split, age just doesnt see many strokes)
 
-## Intro
-In this project, we are attempting to accurate predict if a patient will have a stroke or not based on input variables such as age, gender, BMI, hypertension, glucose level, etc. We were originally attracted to this data set because it involves discovering practical insights that might ultimately lead to saving someone's life. A stroke is a scary event for someone to go through, so by creating predictive models, we hope to get a better insight on not only which variables have the strongest effect on a patient's probability of having a stroke, but also which variables are most significant to target when trying to prevent a risk of stroke. While somewhat rare, the effects of having a stroke can be life-changing. We believe that there are two main business applications to this project. The first is the most obvious connection: saving lives. Whether it be a family medicine doctor or an emergency room respondent, knowing how certain variables interact with the chance of stroke can lead to better prescriptions, better service, and more lives saved. The second business application is less obvious, but still quite relevant: insurance agencies. Insurance agencies can take the information of the patient, input it into the models created, and see the chance of stroke that the client may have. This can go into their modeling of medical insurance packages as well as the the placement of the client within the packages' different level of coverage and risk premium. 
-<p> Next, we will start by loading and cleaning the data so it is prepared for analysis. From there, we will be creating different graphs and visuals to see if certain input variables interact with each other or have a stronger interaction force with the response variable (stroke or not). If any strong correlations are discovered from the data visualization section, we will take note and implement different train and test splits on top of our general models. After data visualization, we start to create the general models: SVM, Decision Tree, KNN, Logistic Regression, and ANN. Within each of these model chunks, we will create a final model that involves all the variables, but broken into a normalized train and test split, and a confusion matrix that compares the model's prediction to the test data. From there, we will also run more models and confusion matrices on different categorical splits. Some examples may be: married versus non-married, hypertension versus non-hypertension, whatever is discovered from the beginnings of our researching in data visualization. Ultimately, we will end with a stacked model that combines the predictions from our main general models and makes a prediction from those by assigning weights to the individual models' predictions. Once the stacked model is made, we will improve it using the train() command learned in class. This will be paired with a confusion matrix of which we can compare performance statistics between the individual models and the stacked model. We will end with a summary of our findings. 
+## Introduction
+In this project, we are attempting to accurately predict whether a patient will have a stroke or not based on input variables such as age, gender, BMI, hypertension, glucose level, etc. We were originally attracted to this data set because it involves discovering practical insights that might ultimately lead to saving someone's life. A stroke is a scary event for someone to go through, so by creating predictive models, we hope to get a better insight on not only which variables have the strongest effect on a patient's probability of having a stroke, but also which variables are most significant to target when trying to prevent a risk of stroke. While somewhat rare, the effects of having a stroke can be life-changing. We believe that there are two main business applications to this project. The first is the most obvious connection: saving lives. Whether it be a family medicine doctor or an emergency room respondent, knowing how certain variables interact with the chance of stroke can lead to better prescriptions, better service, and more lives saved. The second business application is less obvious, but still quite relevant: insurance agencies. Insurance agencies can take the information of the patient, input it into the models created, and see the chance of stroke that the client may have. This can go into their modeling of medical insurance packages as well as the the placement of the client within the packages' different level of coverage and risk premium.
 
-## Library Loading
+Next, we will start by loading and cleaning the data so it is prepared for analysis. From there, we will be creating different graphs and visuals to see if certain input variables interact with each other or have a stronger interaction force with the response variable (stroke or not). If any strong correlations are discovered from the data visualization section, we will take note and implement different train and test splits on top of our general models. After data visualization, we start to create the general models: SVM, Decision Tree, KNN, Logistic Regression, and ANN. Within each of these model chunks, we will create a final model that involves all the variables, but broken into a normalized train and test split, and a confusion matrix that compares the model's prediction to the test data. From there, we will also run more models and confusion matrices on different categorical splits. Some examples may be: married versus non-married, hypertension versus non-hypertension, whatever is discovered from the beginnings of our researching in data visualization. Ultimately, we will end with a stacked model that combines the predictions from our main general models and makes a prediction from those by assigning weights to the individual models' predictions. Once the stacked model is made, we will improve it using the train() command learned in class. This will be paired with a confusion matrix of which we can compare performance statistics between the individual models and the stacked model. We will end with a summary of our findings. 
+
+## Data Preparation
+
+### Library Loading
 ```{r, warning=FALSE}
 library(C50)
 library(class)
@@ -35,8 +36,7 @@ library(kernlab)
 library(lsr)
 ```
 
-
-## Load in Data
+### Load in Data
 ```{r}
 stroke <- read.csv("healthcare-dataset-stroke-data.csv")
 stroke <- stroke[stroke$gender != "Other",]
@@ -49,8 +49,9 @@ stroke$Residence_type <- as.factor(stroke$Residence_type)
 summary(stroke)
 ```
 
+We removed the one instance of gender being neither female nor male in this dataset, as one observation would not lead to a statistically significant result. We also removed the ID column, as that would bear no use to predicting strokes.
 
-## Create Linear Model to Predict Missing BMI
+### Create Linear Model to Predict Missing BMI
 ```{r}
 # create the bmi data that doesn't have NA
 bmi_data <- stroke[stroke$bmi != "N/A",]
@@ -64,6 +65,8 @@ summary(bmi_model)
 stroke$bmi[stroke$bmi == "N/A"] = predict(bmi_model, stroke[stroke$bmi == "N/A",])
 stroke$bmi <- as.numeric(stroke$bmi)
 ```
+
+A lot of values in the BMI column was left N/A, so to counter this issue, we made a linear model to try and predict BMI based on the other variables except stroke. The R squared value was less than 0.27, so the model doesn't actually do a great job explaining variance in data. However, to keep more data usable in the later predictions, we decided to use the BMI calculations.
 
 ### Define Helper Functions
 ```{r}
@@ -85,7 +88,11 @@ set_splits <- function(x, norm) {
 }
 ```
 
+We decided to make some helper functions to normalize the data and create splits.
+
 ## Visualizations
+
+### Initial Visualizations
 ```{r}
 par(mfrow=c(2,2))
 barplot(prop.table(table(stroke$stroke, stroke$gender), 2), main="Gender vs Stroke", xlab="Gender", col=c("darkblue","red"))
@@ -102,6 +109,7 @@ barplot(prop.table(table(stroke$stroke, quantileCut(stroke$bmi, 10)), 2), main="
 barplot(prop.table(table(stroke$stroke, quantileCut(stroke$avg_glucose_level, 10)), 2), main="Glucose vs Stroke", xlab="Glucose Level", col=c("darkblue","red"))
 ```
 
+First, we wanted to visualize how the data related to the variable of interest: stroke or no stroke. Looking at the plots created, there is a higher proportion of people getting a stroke from those with heart disease, hypertension, and marriage. However, all these attributes are related to age, which also leads to higher proportions of strokes as it increases. Residence type doesn't change the proportion of strokes, and smoking and work status doesn't show a strong correlation. Glucose levels only has a large impact at the very extreme ends, but oddly enough, average levels of BMI led to higher proportions of stroke.
 
 ### Inter-Variable Visualization
 ```{r}
@@ -120,6 +128,10 @@ barplot(prop.table(table(stroke$hypertension[stroke$ever_married=="No"], cut(str
 
 ```
 
+First, looking at how marriage, hypertension, and heart disease relate to one another, it seems the effect is negligible. Both factors more strongly correlate to age. As shown in the first set of graphs, increasing age leads to much higher chances of marriage, heart disease, and hypertension. One of the factors that was suggested to correlate to hypertension and heart disease was marriage, and factoring in the effect of age, we can see in the second set of graphs that being married and unmarried did not significantly change the proportion of people who had a stroke then.
+
+Thus, we decided to split based on BMI and Age in our models, since those two variables seem to have a large effect on probability of stroke. The BMI range of between 26.5 to 32 seemed to have a higher proportion of strokes, and being older than 55 also led to much higher chances, so having seperate models will hopefully improve accuracy overall.
+
 ## Create Splits
 ```{r}
 general_norm <- set_splits(stroke, norm = TRUE)
@@ -130,6 +142,8 @@ bmi_safe_data_norm = set_splits(stroke[stroke$bmi<=26.5 | stroke$bmi>=32,], norm
 ```
 
 ## SVM Model
+
+### General Model
 ```{r}
 stroke_svm <- ksvm(stroke ~ ., data = general_norm[[1]], kernel = "rbfdot")
 svm_pred <- predict(stroke_svm, general_norm[[2]])
@@ -137,6 +151,8 @@ cutoff = quantile(svm_pred, 1-mean(general_norm[[1]]$stroke))
 svm_pred = ifelse(svm_pred>cutoff, 1, 0)
 confusionMatrix(as.factor(svm_pred), as.factor(general_norm[[2]]$stroke))
 ```
+
+The SVM model was used with RBF kernel and a cutoff according to the proportion of people in the train data who suffered a stroke. This led to a kappa statistic of 0.0969, very low and indicative of a poor model.
 
 ### SVM Age Based Model
 ```{r}
@@ -158,6 +174,8 @@ true_label = c(age_young_data_norm[[2]]$stroke, age_old_data_norm[[2]]$stroke)
 confusionMatrix(as.factor(combined_svmage_pred), as.factor(true_label))
 ```
 
+When we create two models based on age and combine their results, we can see that the kappa statistic increases to 0.1641, a lot higher than that of the general model.
+
 ### SVM BMI Based Model
 ```{r}
 risk_svm <- ksvm(stroke ~ ., data = bmi_risk_data_norm[[1]], kernel = "rbfdot")
@@ -175,9 +193,10 @@ true_label = c(bmi_risk_data_norm[[2]]$stroke, bmi_safe_data_norm[[2]]$stroke)
 confusionMatrix(as.factor(combined_svmbmipred), as.factor(true_label))
 ```
 
+The best kappa statistic achieved by the SVM is when splitting on BMI, with resulting kappa of 0.1963. It seems that normal BMI range has different predictors of stroke likelihood than the two tails, as does being older compared to younger. Overall though, the SVM was not a great classifier of strokes. With the use of RBF kernels, the coefficients also become un-interpretable, so SVM in this task was not particularly useful.
+
 ## Decision Tree
 ```{r}
-
 #rebalance errors - want to prioritize minimizing false negatives, if people are at risk of stroke we want to know, used 20 to make it about 20% of true positives show up as negatives 
 error_cost <- matrix(c(0, 1, 20, 0), nrow = 2)
 
