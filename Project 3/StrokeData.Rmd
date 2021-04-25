@@ -398,10 +398,8 @@ age_combined_Logpred = c(young_Logpred, old_Logpred)
 age_true_label = c(age_young_data_norm[[2]]$stroke, age_old_data_norm[[2]]$stroke)
 
 confusionMatrix(as.factor(age_combined_Logpred), as.factor(age_true_label))
-
-
 ```
-
+When we create a logistic regression model based on an age split, we can see that accuracy decreases a fair bit while the kappa statistic also decreases somewhat. This indicates a weaker model than the general model. However, it does show that those who are younger have different predictor variables for stroke when compared to those that are older. For example, For the younger group, hypertension and age were the significant variables in predicting stroke while for the older group, age and average glucose level were the significant variables. While this does provide us with further insight, it overall generates a weaker model. This could be due to the over-categorization of age into "old" and "young". It is also important to note the different cutoff thresholds that we implemented for the "young model" and the "old model". For the "young model", we set the threshold to be: any prediction greater than .0002, predict stroke, otherwise, predict no stroke. For the "old model" we set the threshold to be .45. While setting the thresholds to this led to the "young model" predicting all "no stroke" and the "old model" predicting all "stroke," we chose these thresholds because they maximized the kappa statistic without sacrificing too much accuracy. This pattern can be explained by how in general, age is more significant when predicting stroke or no stroke. 
 
 ### Logistic Regression BMI Based Models
 ```{r}
@@ -432,6 +430,7 @@ bmi_true_label = c(bmi_risk_data_norm[[2]]$stroke, bmi_safe_data_norm[[2]]$strok
 
 confusionMatrix(as.factor(bmi_combined_Logpred), as.factor(bmi_true_label))
 ```
+
 
 ## ANN Model
 ```{r cache = TRUE}
