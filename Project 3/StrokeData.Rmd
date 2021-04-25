@@ -142,6 +142,7 @@ bmi_safe_data_norm = set_splits(stroke[stroke$bmi<=26.5 | stroke$bmi>=32,], norm
 ```
 
 ## SVM Model
+We wanted to run a SVM model to see that if can accurately classify "stroke" or "no stroke" based on the variables given. SVM models are known to be quite accurate in classification scenarios. Because our data set is quite clean and somewhat small, we believe that an SVM data set can accurately predict "stroke" or "no stroke." It is also quite efficient given that it uses a subset of training points rather than all individual training points.
 
 ### General Model
 ```{r}
@@ -430,7 +431,7 @@ bmi_true_label = c(bmi_risk_data_norm[[2]]$stroke, bmi_safe_data_norm[[2]]$strok
 
 confusionMatrix(as.factor(bmi_combined_Logpred), as.factor(bmi_true_label))
 ```
-
+When we split based on BMI, we see even worse results with the model. The accuracy drops all the way down to .6969 while the kappa statistic plummets to .0722. We do see a similar idea where there are different significant variables when predicting "stroke" between the "safe BMI" and "risky BMI" group. However, the confusion matrix output leads us to believe that predicting stroke based on different BMI categories is less effective than age or a general model. The thresholds for the BMI splits were created in similar fashion to the age splits where they were set to optimize kappa but ultimately led to predicting all "stroke" or "no stroke" depending on the BMI category. 
 
 ## ANN Model
 ```{r cache = TRUE}
