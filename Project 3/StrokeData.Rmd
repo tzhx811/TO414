@@ -152,7 +152,7 @@ svm_pred = ifelse(svm_pred>cutoff, 1, 0)
 confusionMatrix(as.factor(svm_pred), as.factor(general_norm[[2]]$stroke))
 ```
 
-The SVM model was used with RBF kernel and a cutoff according to the proportion of people in the train data who suffered a stroke. This led to a kappa statistic of 0.0969, very low and indicative of a poor model.
+The SVM model was used with RBF kernel and a cutoff according to the proportion of people in the train data who suffered a stroke. This led to a kappa statistic of 0.0969, very low and indicative of a poor model. Next we want to see if splitting the data based on age and BMI would increase the model's accuracy or kappa statistic. 
 
 ### SVM Age Based Model
 ```{r}
@@ -353,6 +353,7 @@ confusionMatrix(as.factor(knn_bmi_combined_pred), as.factor(true_label_bmi))
 ```
 
 ## Logistic Regression Model
+We wanted to run a logistic regression model to see if it would perform better than the other models. A benefit of a logistic regression model is that it will emphasis which variables are significant (and in what magnitude) in predicting whether a person will have a stroke or not. 
 ```{r}
 #Mass Effect
 MassEffect <- glm(stroke ~ ., data = general_norm[[1]], family = "binomial")
@@ -367,6 +368,7 @@ LogReg_Pred = predict(logit_final, newdata = general_norm[[2]], type = "response
 LogReg_Pred = ifelse(LogReg_Pred>.11, 1, 0)
 confusionMatrix(data = as.factor(LogReg_Pred), reference = as.factor(general_norm[[2]]$stroke))
 ```
+Based on the general model ran, we can see that out of all the original variables, there are significantly less that play a significant role in predicting stroke. We can see that age, hypertension, heart disease, and average glucose level are the most significant. We also see that all of the previously mentioned factors actually increase the log-odds ratio if having a stroke. With the final model, we can see that it is actually quite accurate in predicting stroke or not; it had an accuracy level of .8473. However, it only had a kappa statistic of .1843. This is mostly because there were a much larger number of "negative"(s) than "positive"(s) of stroke in the test data, therefore making the chance of simply guessing randomly correctly much higher if one was to guess "negative" on all the patients. While the model was quite accurate we would want to decrease the number of false negatives as much as possible because the last thing we want is to tell a patient that they are not at risk of having a stroke, and then they have a stroke because we didn't start the remedial process due to the model's prediction. To combat the model from simply either predicting all "negative" or all "positive", we changed the threshold from .5 to .11, being the cutoff point to when we would want to start warning patients of their potential to having a stroke. This is similar to instead of warning them when they have a 50% chance, we warn them when they have an 11% chance of stroke. 11% was the cutoff point that granted the highest kappa statistic. Next, we wanted to see if the age and BMI split could produce a better model. 
 
 ### Logistic Regression Age Based Model
 ```{r}
@@ -399,6 +401,7 @@ confusionMatrix(as.factor(age_combined_Logpred), as.factor(age_true_label))
 
 
 ```
+
 
 ### Logistic Regression BMI Based Models
 ```{r}
@@ -669,3 +672,4 @@ tunedstackBMI_pred <- predict(TunedStackBMI, stackedtest_norm)
 confusionMatrix(tunedstackBMI_pred, as.factor(stackedtest_norm$Stroke))
 ```
 
+## Summary
