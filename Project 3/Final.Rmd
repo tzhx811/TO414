@@ -1,0 +1,145 @@
+---
+title: "Final exam"
+author: "Jenny Yu"
+date: "4/24/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load and Clean Data
+```{r}
+telcochurn <- read.csv("telcochurn.csv", stringsAsFactors = TRUE)
+
+telcochurn$customerID <- NULL
+telcochurn$SeniorCitizen <- as.factor(telcochurn$SeniorCitizen)
+
+telco_mm <- as.data.frame(model.matrix(~.-1, data = telcochurn))
+
+head(telco_mm)
+summary(telco_mm)
+str(telco_mm)
+
+library(caret)
+library(class)
+library(kernlab)
+library(gmodels)
+library(C50)
+library(neuralnet)
+library(lmtest)
+library(aod)
+library(VGAM)
+
+```
+
+## Train and Test 1:1 Ratio
+```{r}
+set.seed(12345)
+
+testrows <- sample(1:nrow(telco_mm),3516)
+```
+
+## KNN
+### KNN with z-score normalization
+```{r}
+#z-score normalization
+knn_z <- as.data.frame(scale(telco_mm[1:ncol(telco_mm)]))
+
+#create test and train 
+knn_z_train <- knn_z[-testrows, ]
+knn_z_test <- knn_z[testrows, ]
+
+knn_z_train_labels <- telco_mm[-testrows, "ChurnYes"]
+knn_z_test_labels <- telco_mm[testrows, "ChurnYes"]
+
+#build out model and predict
+knn_z_test_pred <- knn(train = knn_z_train, test = knn_z_test,
+                      cl = knn_z_train_labels, k=21)
+
+#evaluate prediction results
+confusionMatrix(as.factor(knn_z_test_pred), as.factor(knn_z_test_labels))
+```
+
+### KNN with Min-Max normalization
+```{r}
+#min-max normalization
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+
+knn_minmax <- as.data.frame(lapply(telco_mm, normalize))
+
+#create test and train
+knn_minmax_train <- knn_minmax[-testrows, ]
+knn_minmax_test <- knn_minmax[testrows, ]
+
+knn_minmax_train_labels <- knn_minmax[-testrows, "ChurnYes"]
+knn_minmax_test_labels <- knn_minmax[testrows, "ChurnYes"]
+
+#build out model and predict
+knn_minmax_test_pred <- knn(train = knn_minmax_train, test = knn_minmax_test,
+                      cl = knn_minmax_train_labels, k=21)
+
+#evaluate prediction results
+confusionMatrix(as.factor(knn_minmax_test_pred), as.factor(knn_minmax_test_labels))
+```
+
+### Which of the two models performed better? Why do you think the model that performed better did so?
+```
+The z-score normalization model performed better with a higher kappa statistic. I think the reason that the z-score normalization model performed better. The z-score normalization shifts the range of the distribution without changing its shapem amking the new mean 0 while min-max normalization you keep all the data between 0 and 1, but change the shape of the distribution. In this data specifically, there are a few outliers that skew the data. In general, the min-max normalization doesn't handle outliers that well which is why the z-score normalization performs better with this data.
+```
+
+## SVM Model
+```{r}
+#create train and test
+svm_train <- telco_mm[-testrows, ]
+svm_test <- telco_mm[testrows, ]
+
+#build out model and predict
+svm_model <- ksvm(ChurnYes ~ ., data = svm_train, kernel = "rbfdot")
+svm_pred <- predict(svm_model, svm_test)
+svm_pred = ifelse(svm_pred<0, 0, 1)
+
+#evaluate prediction results
+confusionMatrix(as.factor(svm_pred), as.factor(svm_test$ChurnYes))
+```
+
+## Decision Tree
+```{r}
+#create train and test
+dt_train <- telco_mm[-testrows, ]
+dt_test <- telco_mm[testrows, ]
+summary(dt_train)
+
+#build model minimizing false negatives
+error_cost <- matrix(c(0, 1, 4, 0), nrow = 2)
+dt_model <- C5.0(as.factor(ChurnYes) ~ ., data = dt_train, costs = error_cost)
+
+plot(dt_model)
+summary(dt_model)
+
+#predict the test data
+dt_pred <- predict(dt_model, dt_test)
+
+#Evaluate prediction results
+confusionMatrix(dt_pred, as.factor(dt_test$ChurnYes))
+```
+
+## Combined Model
+```{r}
+#change values into numbers
+knn_z_test_pred <- as.numeric(knn_z_test_pred) 
+dt_pred <- as.numeric(dt_pred)
+
+#combined model
+telco_mm$combined_pred <- knn_z_test_pred + svm_pred + dt_pred
+
+#Transforming into 0 or 1
+combined_pred_actual = ifelse(combined_pred>0, 1, 0)
+
+#evaluating model results
+confusionMatrix(as.factor(combined_pred_actual), as.factor(telco_mm$ChurnYes))
+```
+

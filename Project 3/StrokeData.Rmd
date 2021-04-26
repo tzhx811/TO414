@@ -197,8 +197,9 @@ confusionMatrix(as.factor(combined_svmbmipred), as.factor(true_label))
 The best kappa statistic achieved by the SVM is when splitting on BMI, with resulting kappa of 0.1963. It seems that normal BMI range has different predictors of stroke likelihood than the two tails, as does being older compared to younger. Overall though, the SVM was not a great classifier of strokes. With the use of RBF kernels, the coefficients also become un-interpretable, so SVM in this task was not particularly useful.
 
 ## Decision Tree
+Next, we want to run a Decision Tree model to see if it would perform good predictions. The benefits of knn model include its managerial insights on which variables have the biggest impact on whether or not a person has a stroke.
 ```{r}
-#rebalance errors - want to prioritize minimizing false negatives, if people are at risk of stroke we want to know, used 20 to make it about 20% of true positives show up as negatives 
+#rebalance errors - want to prioritize minimizing false negatives, if people are at risk of stroke we want to know, used 20 to make it about 20% of true positives show up as negatives. this is a number that we decided on as a group in which we would feel comfortable with if we were the doctor or hospital giving advice
 error_cost <- matrix(c(0, 1, 20, 0), nrow = 2)
 
 #build decision tree
@@ -216,6 +217,8 @@ CrossTable(general_norm[[2]]$stroke, stroke_dt_pred)
 
 confusionMatrix(stroke_dt_pred, as.factor(general_norm[[2]]$stroke))
 ```
+Our general Decision Tree model  has a kappa value of 0.1495, meaning that using this model by itself would predict stokes 14.95% better than if it was just random. The accuracy of the model is 72.44% overall, and out of 66 patients who do have stroke, our model predicted 51 of them correctly (77.27% accuracy). 
+Next we want to see if splitting the data based on age and BMI would increase the model's accuracy or kappa statistic for our Decision Tree model.
 
 ### Decision Trees Age Based Model
 ```{r}
@@ -248,6 +251,7 @@ summary(combinedageactual)
 
 confusionMatrix(as.factor(combinedagepredict), as.factor(combinedageactual))
 ```
+When we create a Decision Tree model based on an age split, we can see that accuracy increases a little bit while the kappa statistic decreases a little bit. This indicates about the same performance as the general model. However, it does show that those who are younger have different predictor variables for stroke when compared to those that are older. For example, For the younger group, age, hypertension, and average glucose levels were the significant variables in predicting stroke while for the older group, age, bmi, and average glucose level were the significant variables. This could mean that as a patient gets older, their BMI is a greater indicator of other potential health problems that may also affect stroke levels, or that it becomes a more prominent indicator of overall health and stroke chances.
 
 ### Decision Trees BMI Based Model
 ```{r}
@@ -281,6 +285,7 @@ summary(combinedbmiactual)
 
 confusionMatrix(as.factor(combinedbmipredict), as.factor(combinedbmiactual))
 ```
+When we create a Decision Tree model based on bmi split, we can see that accuracy increases a little bit while the kappa statistic increases by a more significant amount. This indicates that the bmi split performs a little bit better than the general model. In addition, it does show that those who have risky bmi levels have different predictor variables for stroke when compared to those that have not as risky bmi levels. For example, for those that have risky bmi levels, age, average glucose level, bmi, and hypertension were the significant variables in predicting stroke while for the non risky bmi group, age, heart disease, and smoking status were the significant variables. Overall, the confusion matrix output leads us to believe that predicting stroke based on different BMI categories is more effective than age and the general model. The thresholds for the BMI splits were created in similar fashion to the age splits where they were set to optimize kappa but ultimately led to predicting all "stroke" or "no stroke" depending on the BMI category.
 
 ## KNN Model
 Next, we want to run a knn model use max-min normalization to see if it would perform good predictions. The benefits of knn model include its accuracy and fast execution time in predicting whether a person will have a stroke or not.

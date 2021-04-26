@@ -1935,6 +1935,7 @@ div.tocify {
 </div>
 <div id="svm-model" class="section level2">
 <h2>SVM Model</h2>
+<p>We wanted to run a SVM model to see that if can accurately classify “stroke” or “no stroke” based on the variables given. SVM models are known to be quite accurate in classification scenarios. Because our data set is quite clean and somewhat small, we believe that an SVM data set can accurately predict “stroke” or “no stroke.” It is also quite efficient given that it uses a subset of training points rather than all individual training points.</p>
 <div id="general-model" class="section level3">
 <h3>General Model</h3>
 <div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1"></a>stroke_svm &lt;-<span class="st"> </span><span class="kw">ksvm</span>(stroke <span class="op">~</span><span class="st"> </span>., <span class="dt">data =</span> general_norm[[<span class="dv">1</span>]], <span class="dt">kernel =</span> <span class="st">&quot;rbfdot&quot;</span>)</span>
@@ -1969,7 +1970,7 @@ div.tocify {
 ##                                          
 ##        &#39;Positive&#39; Class : 0              
 ## </code></pre>
-<p>The SVM model was used with RBF kernel and a cutoff according to the proportion of people in the train data who suffered a stroke. This led to a kappa statistic of 0.0969, very low and indicative of a poor model.</p>
+<p>The SVM model was used with RBF kernel and a cutoff according to the proportion of people in the train data who suffered a stroke. This led to a kappa statistic of 0.0969, very low and indicative of a poor model. Next we want to see if splitting the data based on age and BMI would increase the model’s accuracy or kappa statistic.</p>
 </div>
 <div id="svm-age-based-model" class="section level3">
 <h3>SVM Age Based Model</h3>
@@ -2066,7 +2067,8 @@ div.tocify {
 </div>
 <div id="decision-tree" class="section level2">
 <h2>Decision Tree</h2>
-<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1"></a><span class="co">#rebalance errors - want to prioritize minimizing false negatives, if people are at risk of stroke we want to know, used 20 to make it about 20% of true positives show up as negatives </span></span>
+<p>Next, we want to run a Decision Tree model to see if it would perform good predictions. The benefits of knn model include its managerial insights on which variables have the biggest impact on whether or not a person has a stroke.</p>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1"></a><span class="co">#rebalance errors - want to prioritize minimizing false negatives, if people are at risk of stroke we want to know, used 20 to make it about 20% of true positives show up as negatives. this is a number that we decided on as a group in which we would feel comfortable with if we were the doctor or hospital giving advice</span></span>
 <span id="cb47-2"><a href="#cb47-2"></a>error_cost &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">20</span>, <span class="dv">0</span>), <span class="dt">nrow =</span> <span class="dv">2</span>)</span>
 <span id="cb47-3"><a href="#cb47-3"></a></span>
 <span id="cb47-4"><a href="#cb47-4"></a><span class="co">#build decision tree</span></span>
@@ -2082,7 +2084,7 @@ div.tocify {
 ##  = error_cost)
 ## 
 ## 
-## C5.0 [Release 2.07 GPL Edition]      Sat Apr 24 14:12:50 2021
+## C5.0 [Release 2.07 GPL Edition]      Mon Apr 26 01:07:18 2021
 ## -------------------------------
 ## 
 ## Class specified by attribute `outcome&#39;
@@ -2240,6 +2242,7 @@ div.tocify {
 ##                                          
 ##        &#39;Positive&#39; Class : 0              
 ## </code></pre>
+<p>Our general Decision Tree model has a kappa value of 0.1495, meaning that using this model by itself would predict stokes 14.95% better than if it was just random. The accuracy of the model is 72.44% overall, and out of 66 patients who do have stroke, our model predicted 51 of them correctly (77.27% accuracy). Next we want to see if splitting the data based on age and BMI would increase the model’s accuracy or kappa statistic for our Decision Tree model.</p>
 <div id="decision-trees-age-based-model" class="section level3">
 <h3>Decision Trees Age Based Model</h3>
 <div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1"></a><span class="kw">summary</span>(age_old_data_norm[[<span class="dv">1</span>]])</span></code></pre></div>
@@ -2291,7 +2294,7 @@ div.tocify {
 ##  age_young_data_norm[[1]], costs = error_cost)
 ## 
 ## 
-## C5.0 [Release 2.07 GPL Edition]      Sat Apr 24 14:12:51 2021
+## C5.0 [Release 2.07 GPL Edition]      Mon Apr 26 01:07:20 2021
 ## -------------------------------
 ## 
 ## Class specified by attribute `outcome&#39;
@@ -2379,7 +2382,7 @@ div.tocify {
 ##  age_old_data_norm[[1]], costs = error_cost)
 ## 
 ## 
-## C5.0 [Release 2.07 GPL Edition]      Sat Apr 24 14:12:52 2021
+## C5.0 [Release 2.07 GPL Edition]      Mon Apr 26 01:07:21 2021
 ## -------------------------------
 ## 
 ## Class specified by attribute `outcome&#39;
@@ -2481,6 +2484,7 @@ div.tocify {
 ##                                           
 ##        &#39;Positive&#39; Class : 0               
 ## </code></pre>
+<p>When we create a Decision Tree model based on an age split, we can see that accuracy increases a little bit while the kappa statistic decreases a little bit. This indicates about the same performance as the general model. However, it does show that those who are younger have different predictor variables for stroke when compared to those that are older. For example, For the younger group, age, hypertension, and average glucose levels were the significant variables in predicting stroke while for the older group, age, bmi, and average glucose level were the significant variables. This could mean that as a patient gets older, their BMI is a greater indicator of other potential health problems that may also affect stroke levels, or that it becomes a more prominent indicator of overall health and stroke chances.</p>
 </div>
 <div id="decision-trees-bmi-based-model" class="section level3">
 <h3>Decision Trees BMI Based Model</h3>
@@ -2500,7 +2504,7 @@ div.tocify {
 ##  bmi_risk_data_norm[[1]], costs = error_cost)
 ## 
 ## 
-## C5.0 [Release 2.07 GPL Edition]      Sat Apr 24 14:12:53 2021
+## C5.0 [Release 2.07 GPL Edition]      Mon Apr 26 01:07:23 2021
 ## -------------------------------
 ## 
 ## Class specified by attribute `outcome&#39;
@@ -2579,7 +2583,7 @@ div.tocify {
 ##  bmi_safe_data_norm[[1]], costs = error_cost)
 ## 
 ## 
-## C5.0 [Release 2.07 GPL Edition]      Sat Apr 24 14:12:53 2021
+## C5.0 [Release 2.07 GPL Edition]      Mon Apr 26 01:07:23 2021
 ## -------------------------------
 ## 
 ## Class specified by attribute `outcome&#39;
@@ -2688,10 +2692,12 @@ div.tocify {
 ##                                           
 ##        &#39;Positive&#39; Class : 0               
 ## </code></pre>
+<p>When we create a Decision Tree model based on bmi split, we can see that accuracy increases a little bit while the kappa statistic increases by a more significant amount. This indicates that the bmi split performs a little bit better than the general model. In addition, it does show that those who have risky bmi levels have different predictor variables for stroke when compared to those that have not as risky bmi levels. For example, for those that have risky bmi levels, age, average glucose level, bmi, and hypertension were the significant variables in predicting stroke while for the non risky bmi group, age, heart disease, and smoking status were the significant variables. Overall, the confusion matrix output leads us to believe that predicting stroke based on different BMI categories is more effective than age and the general model. The thresholds for the BMI splits were created in similar fashion to the age splits where they were set to optimize kappa but ultimately led to predicting all “stroke” or “no stroke” depending on the BMI category.</p>
 </div>
 </div>
 <div id="knn-model" class="section level2">
 <h2>KNN Model</h2>
+<p>Next, we want to run a knn model use max-min normalization to see if it would perform good predictions. The benefits of knn model include its accuracy and fast execution time in predicting whether a person will have a stroke or not.</p>
 <div class="sourceCode" id="cb90"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb90-1"><a href="#cb90-1"></a><span class="kw">set.seed</span>(<span class="dv">12345</span>)</span>
 <span id="cb90-2"><a href="#cb90-2"></a>stroketrain_knn &lt;-<span class="st"> </span>general_norm[[<span class="dv">1</span>]]</span>
 <span id="cb90-3"><a href="#cb90-3"></a>stroketest_knn &lt;-<span class="st"> </span>general_norm[[<span class="dv">2</span>]]</span>
@@ -2730,6 +2736,7 @@ div.tocify {
 ##                                           
 ##        &#39;Positive&#39; Class : 0               
 ## </code></pre>
+<p>Our general KNN model using max-min normalization has a kappa value of 0.61, which is significantly higher than other individual models.The accuracy of the model is 97.18% overall, and out of 66 patients who do have stroke, our model predicted 36 of them correctly (54.5% accuracy). Next we want to see if splitting the data based on age and BMI would increase the model’s accuracy or kappa statistic for our KNN model.</p>
 <div id="knn-model-age-based-model" class="section level3">
 <h3>KNN Model Age Based Model</h3>
 <div class="sourceCode" id="cb92"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb92-1"><a href="#cb92-1"></a><span class="co">###Young patients</span></span>
@@ -2804,7 +2811,7 @@ div.tocify {
 ##                                           
 ##        &#39;Positive&#39; Class : 0               
 ## </code></pre>
-<div class="sourceCode" id="cb96"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb96-1"><a href="#cb96-1"></a><span class="co">##Combined</span></span>
+<div class="sourceCode" id="cb96"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb96-1"><a href="#cb96-1"></a><span class="co">##Combine the results together</span></span>
 <span id="cb96-2"><a href="#cb96-2"></a>knn_age_combined_pred =<span class="st"> </span><span class="kw">c</span>(stroke_knn_pred_young, stroke_knn_pred_old) <span class="op">-</span><span class="st"> </span><span class="dv">1</span></span>
 <span id="cb96-3"><a href="#cb96-3"></a>true_label_age =<span class="st"> </span><span class="kw">c</span>(age_young_data_norm[[<span class="dv">2</span>]]<span class="op">$</span>stroke, age_old_data_norm[[<span class="dv">2</span>]]<span class="op">$</span>stroke)</span>
 <span id="cb96-4"><a href="#cb96-4"></a><span class="kw">confusionMatrix</span>(<span class="kw">as.factor</span>(knn_age_combined_pred), <span class="kw">as.factor</span>(true_label_age))</span></code></pre></div>
@@ -2835,6 +2842,7 @@ div.tocify {
 ##                                           
 ##        &#39;Positive&#39; Class : 0               
 ## </code></pre>
+<p>After splitting the data by age, we build 2 separate models and put them together for the combined model. As seen in the confusion matrices, the kappa value for the young-patients knn model is only 0.22, while it is 0.76 for old-patients data. This is becuase there are only 8 young patients in our test data actually have stroke, while 61 old patients have stroke. As result, the KNN model is very powerful when predicting whether an old patient would have stroke. The combined model results have a kappa value of 0.7348, which is slightly lower than the model of old patients data. But it is still improved from the original model without the age split.</p>
 </div>
 <div id="knn-model-bmi-based-model" class="section level3">
 <h3>KNN Model BMI Based Model</h3>
@@ -2941,10 +2949,13 @@ div.tocify {
 ##                                           
 ##        &#39;Positive&#39; Class : 0               
 ## </code></pre>
+<p>After splitting the data by bmi value, we build 2 separate models and put them together for the combined model. As seen in the confusion matrices, the kappa value for the risky group (bmi value over 26.5) knn model is only 0.3867, and it is 0.5964 for safe group. As result, our KNN model is more powerful when predicting results for patients with bmi balue lower than 26.5. When we combine two models’ resultgs together, the combined model results have a kappa value of 0.4927, which is lower than the kappa values of both the original KNN model and the age split KNN model.</p>
+<p>Moving forward, the KNN models have pretty significant kappa values and should be considered as an important factor in the final stacked model. Moreover, the KNN model built on age-split data is the most powerful knn model with kappa value over 0.7.</p>
 </div>
 </div>
 <div id="logistic-regression-model" class="section level2">
 <h2>Logistic Regression Model</h2>
+<p>We wanted to run a logistic regression model to see if it would perform better than the other models. A benefit of a logistic regression model is that it will emphasis which variables are significant (and in what magnitude) in predicting whether a person will have a stroke or not.</p>
 <div class="sourceCode" id="cb104"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb104-1"><a href="#cb104-1"></a><span class="co">#Mass Effect</span></span>
 <span id="cb104-2"><a href="#cb104-2"></a>MassEffect &lt;-<span class="st"> </span><span class="kw">glm</span>(stroke <span class="op">~</span><span class="st"> </span>., <span class="dt">data =</span> general_norm[[<span class="dv">1</span>]], <span class="dt">family =</span> <span class="st">&quot;binomial&quot;</span>)</span>
 <span id="cb104-3"><a href="#cb104-3"></a><span class="kw">summary</span>(MassEffect)</span></code></pre></div>
@@ -3244,6 +3255,7 @@ div.tocify {
 ##                                           
 ##        &#39;Positive&#39; Class : 0               
 ## </code></pre>
+<p>Based on the general model ran, we can see that out of all the original variables, there are significantly less that play a significant role in predicting stroke. We can see that age, hypertension, heart disease, and average glucose level are the most significant. We also see that all of the previously mentioned factors actually increase the log-odds ratio if having a stroke. With the final model, we can see that it is actually quite accurate in predicting stroke or not; it had an accuracy level of .8473. However, it only had a kappa statistic of .1843. This is mostly because there were a much larger number of “negative”(s) than “positive”(s) of stroke in the test data, therefore making the chance of simply guessing randomly correctly much higher if one was to guess “negative” on all the patients. While the model was quite accurate we would want to decrease the number of false negatives as much as possible because the last thing we want is to tell a patient that they are not at risk of having a stroke, and then they have a stroke because we didn’t start the remedial process due to the model’s prediction. To combat the model from simply either predicting all “negative” or all “positive”, we changed the threshold from .5 to .11, being the cutoff point to when we would want to start warning patients of their potential to having a stroke. This is similar to instead of warning them when they have a 50% chance, we warn them when they have an 11% chance of stroke. 11% was the cutoff point that granted the highest kappa statistic. Next, we wanted to see if the age and BMI split could produce a better model.</p>
 <div id="logistic-regression-age-based-model" class="section level3">
 <h3>Logistic Regression Age Based Model</h3>
 <div class="sourceCode" id="cb112"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb112-1"><a href="#cb112-1"></a><span class="co">#Young</span></span>
@@ -3824,6 +3836,7 @@ div.tocify {
 ##                                           
 ##        &#39;Positive&#39; Class : 0               
 ## </code></pre>
+<p>When we create a logistic regression model based on an age split, we can see that accuracy decreases a fair bit while the kappa statistic also decreases somewhat. This indicates a weaker model than the general model. However, it does show that those who are younger have different predictor variables for stroke when compared to those that are older. For example, For the younger group, hypertension and age were the significant variables in predicting stroke while for the older group, age and average glucose level were the significant variables. While this does provide us with further insight, it overall generates a weaker model. This could be due to the over-categorization of age into “old” and “young”. It is also important to note the different cutoff thresholds that we implemented for the “young model” and the “old model”. For the “young model”, we set the threshold to be: any prediction greater than .0002, predict stroke, otherwise, predict no stroke. For the “old model” we set the threshold to be .45. While setting the thresholds to this led to the “young model” predicting all “no stroke” and the “old model” predicting all “stroke,” we chose these thresholds because they maximized the kappa statistic without sacrificing too much accuracy. This pattern can be explained by how in general, age is more significant when predicting stroke or no stroke.</p>
 </div>
 <div id="logistic-regression-bmi-based-models" class="section level3">
 <h3>Logistic Regression BMI Based Models</h3>
@@ -4411,6 +4424,7 @@ div.tocify {
 ##                                           
 ##        &#39;Positive&#39; Class : 0               
 ## </code></pre>
+<p>When we split based on BMI, we see even worse results with the model. The accuracy drops all the way down to .6969 while the kappa statistic plummets to .0722. We do see a similar idea where there are different significant variables when predicting “stroke” between the “safe BMI” and “risky BMI” group. However, the confusion matrix output leads us to believe that predicting stroke based on different BMI categories is less effective than age or a general model. The thresholds for the BMI splits were created in similar fashion to the age splits where they were set to optimize kappa but ultimately led to predicting all “stroke” or “no stroke” depending on the BMI category.</p>
 </div>
 </div>
 <div id="ann-model" class="section level2">
@@ -4710,7 +4724,7 @@ div.tocify {
 ##  = error_cost)
 ## 
 ## 
-## C5.0 [Release 2.07 GPL Edition]      Sat Apr 24 14:13:09 2021
+## C5.0 [Release 2.07 GPL Edition]      Mon Apr 26 01:09:41 2021
 ## -------------------------------
 ## 
 ## Class specified by attribute `outcome&#39;
@@ -4824,7 +4838,7 @@ div.tocify {
 ##  = error_cost)
 ## 
 ## 
-## C5.0 [Release 2.07 GPL Edition]      Sat Apr 24 14:13:09 2021
+## C5.0 [Release 2.07 GPL Edition]      Mon Apr 26 01:09:41 2021
 ## -------------------------------
 ## 
 ## Class specified by attribute `outcome&#39;
@@ -4929,7 +4943,7 @@ div.tocify {
 ##  = error_cost)
 ## 
 ## 
-## C5.0 [Release 2.07 GPL Edition]      Sat Apr 24 14:13:09 2021
+## C5.0 [Release 2.07 GPL Edition]      Mon Apr 26 01:09:41 2021
 ## -------------------------------
 ## 
 ## Class specified by attribute `outcome&#39;
@@ -5202,6 +5216,9 @@ div.tocify {
 ##        &#39;Positive&#39; Class : 0               
 ## </code></pre>
 </div>
+</div>
+<div id="summary" class="section level2">
+<h2>Summary</h2>
 </div>
 
 
