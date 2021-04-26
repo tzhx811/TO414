@@ -283,6 +283,7 @@ confusionMatrix(as.factor(combinedbmipredict), as.factor(combinedbmiactual))
 ```
 
 ## KNN Model
+Next, we want to run a knn model use max-min normalization to see if it would perform good predictions. The benefits of knn model include its accuracy and fast execution time in predicting whether a person will have a stroke or not.
 ```{r}
 set.seed(12345)
 stroketrain_knn <- general_norm[[1]]
@@ -296,6 +297,8 @@ stroke_knn_test_pred <- knn(train = stroketrain_knn, test = stroketest_knn,
 
 confusionMatrix(as.factor(stroke_knn_test_pred), as.factor(knn_test_labels))
 ```
+Our general KNN model using max-min normalization has a kappa value of 0.61, which is significantly higher than other individual models.The accuracy of the model is 97.18% overall, and out of 66 patients who do have stroke, our model predicted 36 of them correctly (54.5% accuracy). 
+Next we want to see if splitting the data based on age and BMI would increase the model's accuracy or kappa statistic for our KNN model.
 
 ### KNN Model Age Based Model
 ```{r}
@@ -319,11 +322,13 @@ stroke_knn_pred_old <- knn(train = stroketrain_knn_old, test = stroketest_knn_ol
                       cl = knn_train_labels_old, k = sqrt(sqrt(nrow(stroketrain_knn_old))))
 confusionMatrix(as.factor(stroke_knn_pred_old), as.factor(knn_test_labels_old))
 
-##Combined
+##Combine the results together
 knn_age_combined_pred = c(stroke_knn_pred_young, stroke_knn_pred_old) - 1
 true_label_age = c(age_young_data_norm[[2]]$stroke, age_old_data_norm[[2]]$stroke)
 confusionMatrix(as.factor(knn_age_combined_pred), as.factor(true_label_age))
 ```
+After splitting the data by age, we build 2 separate models and put them together for the combined model. As seen in the confusion matrices, the kappa value for the young-patients knn model is only 0.22, while it is 0.76 for old-patients data. This is becuase there are only 8 young patients in our test data actually have stroke, while 61 old patients have stroke. As result, the KNN model is very powerful when predicting whether an old patient would have stroke.
+The combined model results have a kappa value of 0.7348, which is slightly lower than the model of old patients data. But it is still improved from the original model without the age split.
 
 ### KNN Model BMI Based Model
 ```{r}
@@ -352,6 +357,10 @@ knn_bmi_combined_pred = c(stroke_knn_pred_risk, stroke_knn_pred_safe) - 1
 true_label_bmi = c(bmi_risk_data_norm[[2]]$stroke, bmi_safe_data_norm[[2]]$stroke)
 confusionMatrix(as.factor(knn_bmi_combined_pred), as.factor(true_label_bmi))
 ```
+After splitting the data by bmi value, we build 2 separate models and put them together for the combined model. As seen in the confusion matrices, the kappa value for the risky group (bmi value over 26.5) knn model is only 0.3867, and it is 0.5964 for safe group. As result, our KNN model is more powerful when predicting results for patients with bmi balue lower than 26.5.
+When we combine two models' resultgs together, the combined model results have a kappa value of 0.4927, which is lower than the kappa values of both the original KNN model and the age split KNN model.
+
+Moving forward, the KNN models have pretty significant kappa values and should be considered as an important factor in the final stacked model. Moreover, the KNN model built on age-split data is the most powerful knn model with kappa value over 0.7. 
 
 ## Logistic Regression Model
 We wanted to run a logistic regression model to see if it would perform better than the other models. A benefit of a logistic regression model is that it will emphasis which variables are significant (and in what magnitude) in predicting whether a person will have a stroke or not. 
