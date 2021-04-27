@@ -1,0 +1,14 @@
+base
+C50
+class
+gmodels
+lattice
+ggplot2
+caret
+zoo
+lmtest
+aod
+VGAM
+neuralnet
+kernlab
+lsr

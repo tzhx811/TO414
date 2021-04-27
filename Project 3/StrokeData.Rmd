@@ -295,40 +295,46 @@ Next, we want to run a knn model use max-min normalization to see if it would pe
 ```{r}
 set.seed(12345)
 stroketrain_knn <- general_norm[[1]]
+stroketrain_knn$stroke = NULL
 stroketest_knn <- general_norm[[2]]
+stroketest_knn$stroke = NULL
 
 knn_train_labels <- general_norm[[1]]$stroke
 knn_test_labels <- general_norm[[2]]$stroke
 
 stroke_knn_test_pred <- knn(train = stroketrain_knn, test = stroketest_knn,
-                      cl = knn_train_labels, k= sqrt(sqrt(nrow(general_norm[[1]]))))
+                      cl = knn_train_labels, k= 4)
 
 confusionMatrix(as.factor(stroke_knn_test_pred), as.factor(knn_test_labels))
 ```
 
-Our general KNN model using max-min normalization has a kappa value of 0.61, which is significantly higher than other individual models.The accuracy of the model is 97.18% overall, and out of 66 patients who do have stroke, our model predicted 36 of them correctly (54.5% accuracy). 
+Our general KNN model using max-min normalization has a kappa value of 0.0768, with an accuracy of 0.9413. The value of k used was very small of 4, since larger numbers led to the effect of the nearest neighbors being diminished and always predicting 0 (no stroke), since the majority of the data is no stroke.
 Next we want to see if splitting the data based on age and BMI would increase the model's accuracy or kappa statistic for our KNN model.
 
 ### KNN Model Age Based Model
 ```{r}
 ###Young patients
 stroketrain_knn_young <- age_young_data_norm[[1]]
+stroketrain_knn_young$stroke = NULL
 stroketest_knn_young <- age_young_data_norm[[2]]
+stroketest_knn_young$stroke = NULL
 knn_train_labels_young <- age_young_data_norm[[1]]$stroke
 knn_test_labels_young <- age_young_data_norm[[2]]$stroke
 
 stroke_knn_pred_young <- knn(train = stroketrain_knn_young, test = stroketest_knn_young,
-                      cl = knn_train_labels_young, k= sqrt(sqrt(nrow(stroketrain_knn_young))))
+                      cl = knn_train_labels_young, k= 4)
 confusionMatrix(as.factor(stroke_knn_pred_young), as.factor(knn_test_labels_young))
 
 ###Old patients
 stroketrain_knn_old <- age_old_data_norm[[1]]
+stroketrain_knn_old$stroke = NULL
 stroketest_knn_old <- age_old_data_norm[[2]]
+stroketest_knn_old$stroke = NULL
 knn_train_labels_old <- age_old_data_norm[[1]]$stroke
 knn_test_labels_old <- age_old_data_norm[[2]]$stroke
 
 stroke_knn_pred_old <- knn(train = stroketrain_knn_old, test = stroketest_knn_old,
-                      cl = knn_train_labels_old, k = sqrt(sqrt(nrow(stroketrain_knn_old))))
+                      cl = knn_train_labels_old, k = 4)
 confusionMatrix(as.factor(stroke_knn_pred_old), as.factor(knn_test_labels_old))
 
 ##Combine the results together
@@ -337,29 +343,33 @@ true_label_age = c(age_young_data_norm[[2]]$stroke, age_old_data_norm[[2]]$strok
 confusionMatrix(as.factor(knn_age_combined_pred), as.factor(true_label_age))
 ```
 
-After splitting the data by age, we build 2 separate models and put them together for the combined model. As seen in the confusion matrices, the kappa value for the young-patients knn model is only 0.22, while it is 0.76 for old-patients data. This is becuase there are only 8 young patients in our test data actually have stroke, while 61 old patients have stroke. As result, the KNN model is very powerful when predicting whether an old patient would have stroke.
-The combined model results have a kappa value of 0.7348, which is slightly lower than the model of old patients data. But it is still improved from the original model without the age split.
+After splitting the data by age, we build 2 separate models and put them together for the combined model. As seen in the confusion matrices, the kappa value for the young-patients knn model is 0, while it is 0.034 for old-patients data. This is because there are only 8 young patients in our test data actually have stroke, while 61 old patients have stroke. As result, the KNN model is very powerful when predicting whether an old patient would have stroke.
+The combined model results have a kappa value of 0.0692, which is slightly lower than the original model without the age split, likely since younger users are very inaccurate to precit strokes on due to the low number of observations.
 
 ### KNN Model BMI Based Model
 ```{r}
 ###Risky patients
 stroketrain_knn_risk <- bmi_risk_data_norm[[1]]
+stroketrain_knn_risk$stroke = NULL
 stroketest_knn_risk <- bmi_risk_data_norm[[2]]
+stroketest_knn_risk$stroke = NULL
 knn_train_labels_risk <- bmi_risk_data_norm[[1]]$stroke
 knn_test_labels_risk <- bmi_risk_data_norm[[2]]$stroke
 
 stroke_knn_pred_risk <- knn(train = stroketrain_knn_risk, test = stroketest_knn_risk,
-                      cl = knn_train_labels_risk, k= sqrt(sqrt(nrow(stroketrain_knn_risk))))
+                      cl = knn_train_labels_risk, k= 4)
 confusionMatrix(as.factor(stroke_knn_pred_risk), as.factor(knn_test_labels_risk))
 
 ###Safe patients
 stroketrain_knn_safe <- bmi_safe_data_norm[[1]]
+stroketrain_knn_safe$stroke = NULL
 stroketest_knn_safe <- bmi_safe_data_norm[[2]]
+stroketest_knn_safe$stroke = NULL
 knn_train_labels_safe <- bmi_safe_data_norm[[1]]$stroke
 knn_test_labels_safe <- bmi_safe_data_norm[[2]]$stroke
 
 stroke_knn_pred_safe <- knn(train = stroketrain_knn_safe, test = stroketest_knn_safe,
-                      cl = knn_train_labels_safe, k = sqrt(sqrt(nrow(stroketrain_knn_safe))))
+                      cl = knn_train_labels_safe, k = 4)
 confusionMatrix(as.factor(stroke_knn_pred_safe), as.factor(knn_test_labels_safe))
 
 ##Combined
@@ -368,10 +378,10 @@ true_label_bmi = c(bmi_risk_data_norm[[2]]$stroke, bmi_safe_data_norm[[2]]$strok
 confusionMatrix(as.factor(knn_bmi_combined_pred), as.factor(true_label_bmi))
 ```
 
-After splitting the data by bmi value, we build 2 separate models and put them together for the combined model. As seen in the confusion matrices, the kappa value for the risky group (bmi value over 26.5) knn model is only 0.3867, and it is 0.5964 for safe group. As result, our KNN model is more powerful when predicting results for patients with bmi balue lower than 26.5.
-When we combine two models' resultgs together, the combined model results have a kappa value of 0.4927, which is lower than the kappa values of both the original KNN model and the age split KNN model.
+After splitting the data by bmi value, we build 2 separate models and put them together for the combined model. As seen in the confusion matrices, the kappa value for the risky group (bmi value over 26.5 but under 32) knn model is only 0.0564, and it is 0.0513 for safe group. As result, our KNN model is more powerful when predicting results for patients with extreme bmi value.
+When we combine two models' results together, the combined model results have a kappa value of 0.061.
 
-Moving forward, the KNN models have pretty significant kappa values and should be considered as an important factor in the final stacked model. Moreover, the KNN model built on age-split data is the most powerful knn model with kappa value over 0.7. 
+Moving forward, the KNN models have pretty low kappa values and may not be considered as an important factor in the final stacked model. Since the dataset is small and strokes are a much smaller fraction of the observations, knn does not lend well to being a good model for this case.
 
 ## Logistic Regression Model
 We wanted to run a logistic regression model to see if it would perform better than the other models. A benefit of a logistic regression model is that it will emphasis which variables are significant (and in what magnitude) in predicting whether a person will have a stroke or not. 
@@ -459,45 +469,46 @@ When we split based on BMI, we see even worse results with the model. The accura
 ## ANN Model
 ```{r cache = TRUE}
 
-ANNmodel <- neuralnet(general_norm[[1]]$stroke ~ ., data=general_norm[[1]],hidden =2, stepmax = 1000000)
+ANNmodel <- neuralnet(general_norm[[1]]$stroke ~ ., data=general_norm[[1]], hidden = 2, stepmax = 1000000)
 plot(ANNmodel, rep = "best")
 
 # obtain model results
 ann_results <- compute(ANNmodel, general_norm[[2]])
 ann_predicted_stroke <- ann_results$net.result
-ann_predicted_stroke <- ifelse(ann_predicted_stroke >= 0.5, 1,0)
+cutoff = quantile(ann_predicted_stroke, 1-mean(general_norm[[1]]$stroke))
+ann_predicted_stroke <- ifelse(ann_predicted_stroke > cutoff, 1, 0)
 
 confusionMatrix(as.factor(ann_predicted_stroke), as.factor(general_norm[[2]]$stroke))
-
-
 ```
 
-Our general ANN model does a poor job in predicting stroke for patients. It has a kappa value of 0.025, which is significantly lower than other individual models.The accuracy of the model is 94.75% overall, and out of 66 patients who do have stroke, our model predicted only 1 of them correctly. This is worrying, especially with so many false negatives. 
+Our general ANN model does a poor job in predicting stroke for patients. It has a kappa value of 0.1466, which is comparable to the other individual models.The accuracy of the model is 91.93% overall, and out of 66 patients who do have stroke, our model predicted only 12 of them correctly. This is worrying, especially with so many false negatives. 
 Next we want to see if splitting the data based on age and BMI would increase the model's accuracy or kappa statistic for our ANN model.
 
 ### ANN Age Based Model
 ```{r cache = TRUE}
 #Young
-ANNyoungmodel <- neuralnet(age_young_data_norm[[1]]$stroke ~ ., data=age_young_data_norm[[1]],hidden =2)
+ANNyoungmodel <- neuralnet(age_young_data_norm[[1]]$stroke ~ ., data=age_young_data_norm[[1]], hidden = 2)
 plot(ANNyoungmodel, rep = "best")
 
 # obtain model results
 annageyoung_results <- compute(ANNyoungmodel, age_young_data_norm[[2]])
 predicted_strokeyoung <- annageyoung_results$net.result
-predicted_strokeyoung <- ifelse(predicted_strokeyoung >= 0.5, 1,0)
+cutoff = quantile(predicted_strokeyoung, 1-mean(age_young_data_norm[[1]]$stroke))
+predicted_strokeyoung <- ifelse(predicted_strokeyoung > cutoff, 1, 0)
 
 # Accuracy, Kappa, etc.
 confusionMatrix(as.factor(predicted_strokeyoung), as.factor(age_young_data_norm[[2]]$stroke))
 
 
 #Old
-ANNoldmodel <- neuralnet(age_old_data_norm[[1]]$stroke ~ ., data=age_old_data_norm[[1]],hidden =2)
+ANNoldmodel <- neuralnet(age_old_data_norm[[1]]$stroke ~ ., data=age_old_data_norm[[1]],hidden = 2)
 plot(ANNoldmodel, rep = "best")
 
 # obtain model results
 annageold_results <- compute(ANNoldmodel, age_old_data_norm[[2]])
 predicted_strokeold <- annageold_results$net.result
-predicted_strokeold <- ifelse(predicted_strokeold >= 0.5, 1,0)
+cutoff = quantile(predicted_strokeold, 1-mean(age_old_data_norm[[1]]$stroke))
+predicted_strokeold <- ifelse(predicted_strokeold > cutoff, 1, 0)
 
 # Accuracy, Kappa, etc.
 confusionMatrix(as.factor(predicted_strokeold), as.factor(age_old_data_norm[[2]]$stroke))
@@ -508,7 +519,7 @@ true_label = c(age_old_data_norm[[2]]$stroke, age_young_data_norm[[2]]$stroke)
 confusionMatrix(as.factor(combined_predAge), as.factor(true_label))
 ```
 
-While the overall accuracy (94.52%) took a slight dip, splitting by Age improved the ANN model marginally. Now, the Kappa statistic has increased to 0.09. While that still is not a very assuring number, it is an improvement from the non-split ANN model. Before, only 1 correct positive stroke prediction was made. Now, 4 patients were correctly predicted to have a stroke. 
+While the overall accuracy (91.39%) took a slight dip, splitting by Age worsened the ANN model marginally. Now, the Kappa statistic has increased to 0.1086.
 Now we will see if splitting based on BMI makes any difference in these results.
 
 ### ANN BMI Based Model
@@ -520,7 +531,8 @@ plot(ANNriskmodel, rep = "best")
 # obtain model results
 annbmirisk_results <- compute(ANNriskmodel, bmi_risk_data_norm[[2]])
 predicted_strokerisk <- annbmirisk_results$net.result
-predicted_strokerisk <- ifelse(predicted_strokerisk >= 0.5, 1,0)
+cutoff = quantile(predicted_strokerisk, 1-mean(bmi_risk_data_norm[[1]]$stroke))
+predicted_strokerisk <- ifelse(predicted_strokerisk > cutoff, 1, 0)
 
 # Accuracy, Kappa, etc.
 confusionMatrix(as.factor(predicted_strokerisk), as.factor(bmi_risk_data_norm[[2]]$stroke))
@@ -533,7 +545,8 @@ plot(ANNsafemodel, rep = "best")
 # obtain model results
 annbmisafe_results <- compute(ANNsafemodel, bmi_safe_data_norm[[2]])
 predicted_strokesafe <- annbmisafe_results$net.result
-predicted_strokesafe <- ifelse(predicted_strokesafe >= 0.5, 1,0)
+cutoff = quantile(predicted_strokesafe, 1-mean(bmi_safe_data_norm[[1]]$stroke))
+predicted_strokesafe <- ifelse(predicted_strokesafe > cutoff, 1, 0)
 
 # Accuracy, Kappa, etc.
 confusionMatrix(as.factor(predicted_strokesafe), as.factor(bmi_safe_data_norm[[2]]$stroke))
@@ -544,9 +557,9 @@ true_label = c(bmi_risk_data_norm[[2]]$stroke, bmi_safe_data_norm[[2]]$stroke)
 confusionMatrix(as.factor(combined_predbmi), as.factor(true_label))
 ```
 
-Similar to the previous Age-based model, the BMI-based ANN Model slightly increases the Kappa statistic (0.0781) while slightly decreasing the overall accuracy (94.21%). These figures still are not promising, given that only 4 strokes were accurately predicted. This is the same amount of correctly predicted strokes as the Age-based ANN model.
+Similar to the previous Age-based model, the BMI-based ANN Model slightly increases the accuracy (now 92.72%), although this time the kappa statistic improves to 0.2294, the highest of all the models so far. These figures still are not promising, given that only 17 strokes were accurately predicted.
 
-Overall, it seems like the ANN model is not the most useful for stroke predictions, even after splitting by both BMI and Age. The kappa statistics for the general model, Age-based model, and BMI-based model are all far too low to deem these models as valuable. 
+Overall, it seems like the ANN model did have the best kappa statistic when splitting by BMI. However, the gain in kappa statistic doesn't neccessarily translate to more lives saved, since the false negative rate is still quite high.
 
 ## Stacked Model
 Next, we wanted to run a stacked model in order to see if a model that combines the findings of each individual model can more accurately predict stroke. 
@@ -580,11 +593,11 @@ stacked_dt_pred <- predict(stacked_dt, stackedtest)
 #Evaluate prediction results
 confusionMatrix(stacked_dt_pred, as.factor(stackedtest$Stroke))
 ```
-Based on the stacked model, it seems that the model is mainly making its decisions off of the decision tree and KNN model, but mostly the KNN model. However, even with all the models' predictions running as variables, the kappa and accuracy statistic of the stacked model does not out perform that of the KNN model or logistic regression model performing individually. The kappa statistic of the stacked model is comparable to the individual performance of the decision, doing better than the ANN and SVM model. 
+Based on the stacked model, it seems that the model is mainly making its decisions off of the decision tree and logistic regression model, but mostly the decision tree model. However, even with all the models' predictions running as variables, the kappa and accuracy statistic of the stacked model does not out perform that of the ANN model individually. The kappa statistic of the stacked model is comparable to the individual performance of the decision tree model or SVM model. 
 
 ### Stacked Model Age Based Model
 ```{r}
-stackedmodelage = data.frame(decision_tree = combinedagepredict, ann = combined_predAge, knn = knn_age_combined_pred, logistic_reg = age_combined_Logpred, svm = combined_svmage_pred, Stroke = general_norm[[2]]$stroke)
+stackedmodelage = data.frame(decision_tree = combinedagepredict, ann = combined_predAge, knn = knn_age_combined_pred, logistic_reg = age_combined_Logpred, svm = combined_svmage_pred, Stroke = true_label_age)
 
 str(stackedmodelage)
 
@@ -613,11 +626,11 @@ stacked_age_dt_pred <- predict(stacked_age_dt, stackedagetest)
 #Evaluate prediction results
 confusionMatrix(stacked_age_dt_pred, as.factor(stackedagetest$Stroke))
 ```
-We see that the stacked model does not perform well when we split on age and BMI. It has an accuracy and kappa of .0495 and 0 respectively, indicating a very weak predictive ability. This is probably due to the model only predicting all "stroke". Our model is probably doing this because of the error cost for false negatives being quite high, yet it is similar to the cost of our original model. The stacked model is probably not optimal for categorized splits. We also see that there is a high no information rate from the split model, so there is something behind the scenes going on with the models when stacking. It could be because our age split models did not perform well in general. 
+We see that the stacked model does not perform well when we split on age. It has an accuracy and kappa of 0.7126 and 0.1537 respectively, which has lower accuracy and comparable kappa statistic to our other models. This is probably due to the model overly predicting "stroke". Our model is probably doing this because of the error cost for false negatives being quite high, yet it is similar to the cost of our original model. The stacked model is probably not optimal for categorized splits. We also see that there is a high no information rate from the split model, so there is something behind the scenes going on with the models when stacking. It could be because our age split models did not perform well in general. 
 
 ### Stacked Model BMI Based Model
 ```{r}
-stackedmodelbmi = data.frame(decision_tree = combinedbmipredict, ann = combined_predbmi, knn = knn_bmi_combined_pred, logistic_reg = bmi_combined_Logpred, svm = combined_svmbmipred, Stroke = general_norm[[2]]$stroke)
+stackedmodelbmi = data.frame(decision_tree = combinedbmipredict, ann = combined_predbmi, knn = knn_bmi_combined_pred, logistic_reg = bmi_combined_Logpred, svm = combined_svmbmipred, Stroke = true_label_bmi)
 
 str(stackedmodelbmi)
 
@@ -646,7 +659,7 @@ stacked_bmi_dt_pred <- predict(stacked_bmi_dt, stackedbmitest)
 #Evaluate prediction results
 confusionMatrix(stacked_bmi_dt_pred, as.factor(stackedbmitest$Stroke))
 ```
-We see a similar result from the BMI stacked model. This is probably due to similar reasons outlined above from the age stacked model. 
+We see a similar result from the BMI stacked model. The kappa statistic is quite low at 0.0853, despite using many more of the individual models to get the final prediction. This is probably due to similar reasons outlined above from the age stacked model. 
 
 ## Improved Stacked Model
 Next, due to the somewhat light predictability of the stacked model, we wanted to see if we could improve it. 
@@ -680,7 +693,7 @@ names(stackedtest_norm)[names(stackedtest_norm) == "knn1"] <- "knn"
 tunedstack_pred <- predict(TunedStack, stackedtest_norm)
 confusionMatrix(tunedstack_pred, as.factor(stackedtest_norm$Stroke))
 ```
-We see that even with improving the model, the same issue persists where the model is predicting all of one guess. The only difference this time, is that it is guess all "no-stroke". This change could be due to the fact that we do not have the error costs included in the creation of the model, therefore the model predicting all "no-stroke" due to the lack of "stroke" in the data set in general. We see that while even though the train() command gave us a model with an accuracy of .97+ and a kappa of .5+, when put against the test data, it predicts all "no stroke". It is difficult because there are only 47 instances of "stroke" in the test data
+We see that even with improving the model, the same issue persists where the model is predicting all of one guess. The only difference this time, is that it is guess all "no-stroke". This change could be due to the fact that we do not have the error costs included in the creation of the model, therefore the model predicting all "no-stroke" due to the lack of "stroke" in the data set in general.
 
 ### Improved Stacked Model Age Based Model
 ```{r, warning=FALSE}
@@ -695,7 +708,7 @@ TunedStackAge
 tunedstackAGE_pred <- predict(TunedStackAge, stackedtest_norm)
 confusionMatrix(tunedstackAGE_pred, as.factor(stackedtest_norm$Stroke))
 ```
-We see that the improved age model has similar results to the general improved stacked model 
+We see that the improved age model has similar results to the general improved stacked model.
 
 ### Improved Stacked Model BMI Based Model
 ```{r, warning=FALSE}
@@ -710,7 +723,7 @@ TunedStackBMI
 tunedstackBMI_pred <- predict(TunedStackBMI, stackedtest_norm)
 confusionMatrix(tunedstackBMI_pred, as.factor(stackedtest_norm$Stroke))
 ```
-Again, we see a similar output. 
+Again, we see a similar output. In all of the trials using train, the model only ever predicts 0, both in the training and the test data splits.
 
 ## Summary
 Overall, this project taught us a lot, but before we get into what it has taught us, let's talk about the insights we could extract from our analysis. In our intro, we talked about how the analysis we get from this project could be applied to predicting if a patient is going to have a stroke or not for both family physicians, hospitals, and insurance companies. We believe that while some of our models are accurate, it is best to use the models as a second opinion. The models are not accurate enough to full rely on them to make decisions. In a world with tons of information flowing and biases influencing decision making choices, a second opinion makes all the difference and can be the difference between life and death. This not only can give more confidence to the first initial prediction (when they match), but it can act as a warning to mismatched predictions, indicating that a deeper dive and more research might be needed in order to make a concrete prediction. Insurance companies and doctors can cross reference between the predictions of the KNN model and the predictions of the decision tree with the prediction of the doctor in order to thoroughly ensure that the right call is being made to the best of their abilities. The KNN model is solely accuracy based, making it a solid second opinion when it comes to deciding whether or not they will have a stroke or not, while the decision tree involves a cost matrix, acting as a solid second opinion consultant for whether to diagnose a patient with risk of stroke or not. 
