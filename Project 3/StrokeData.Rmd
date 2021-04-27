@@ -1,7 +1,7 @@
 ---
 title: "Predicting Stroke"
 author: "Evan Jiang, Anthony Zhao, Jenny Yu, Xincheng Yuan, Yusuf Uzhunnan"
-date: "4/25/2021"
+date: "4/26/2021"
 output: 
   html_document:
       toc: true
