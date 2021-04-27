@@ -474,6 +474,7 @@ confusionMatrix(as.factor(ann_predicted_stroke), as.factor(general_norm[[2]]$str
 
 Our general ANN model does a poor job in predicting stroke for patients. It has a kappa value of 0.025, which is significantly lower than other individual models.The accuracy of the model is 94.75% overall, and out of 66 patients who do have stroke, our model predicted only 1 of them correctly. This is worrying, especially with so many false negatives. 
 Next we want to see if splitting the data based on age and BMI would increase the model's accuracy or kappa statistic for our ANN model.
+
 ### ANN Age Based Model
 ```{r cache = TRUE}
 #Young
@@ -509,6 +510,7 @@ confusionMatrix(as.factor(combined_predAge), as.factor(true_label))
 
 While the overall accuracy (94.52%) took a slight dip, splitting by Age improved the ANN model marginally. Now, the Kappa statistic has increased to 0.09. While that still is not a very assuring number, it is an improvement from the non-split ANN model. Before, only 1 correct positive stroke prediction was made. Now, 4 patients were correctly predicted to have a stroke. 
 Now we will see if splitting based on BMI makes any difference in these results.
+
 ### ANN BMI Based Model
 ```{r cache = TRUE}
 #Risk
@@ -545,7 +547,9 @@ confusionMatrix(as.factor(combined_predbmi), as.factor(true_label))
 Similar to the previous Age-based model, the BMI-based ANN Model slightly increases the Kappa statistic (0.0781) while slightly decreasing the overall accuracy (94.21%). These figures still are not promising, given that only 4 strokes were accurately predicted. This is the same amount of correctly predicted strokes as the Age-based ANN model.
 
 Overall, it seems like the ANN model is not the most useful for stroke predictions, even after splitting by both BMI and Age. The kappa statistics for the general model, Age-based model, and BMI-based model are all far too low to deem these models as valuable. 
+
 ## Stacked Model
+Next, we wanted to run a stacked model in order to see if a model that combines the findings of each individual model can more accurately predict stroke. 
 ```{r}
 stackedmodel = data.frame(decision_tree = stroke_dt_pred, ann = ann_predicted_stroke, knn = stroke_knn_test_pred, logistic_reg = LogReg_Pred, svm = svm_pred, Stroke = general_norm[[2]]$stroke)
 
@@ -576,6 +580,7 @@ stacked_dt_pred <- predict(stacked_dt, stackedtest)
 #Evaluate prediction results
 confusionMatrix(stacked_dt_pred, as.factor(stackedtest$Stroke))
 ```
+Based on the stacked model, it seems that the model is mainly making its decisions off of the decision tree and KNN model, but mostly the KNN model. However, even with all the models' predictions running as variables, the kappa and accuracy statistic of the stacked model does not out perform that of the KNN model or logistic regression model performing individually. The kappa statistic of the stacked model is comparable to the individual performance of the decision, doing better than the ANN and SVM model. 
 
 ### Stacked Model Age Based Model
 ```{r}
@@ -608,6 +613,7 @@ stacked_age_dt_pred <- predict(stacked_age_dt, stackedagetest)
 #Evaluate prediction results
 confusionMatrix(stacked_age_dt_pred, as.factor(stackedagetest$Stroke))
 ```
+We see that the stacked model does not perform well when we split on age and BMI. It has an accuracy and kappa of .0495 and 0 respectively, indicating a very weak predictive ability. This is probably due to the model only predicting all "stroke". Our model is probably doing this because of the error cost for false negatives being quite high, yet it is similar to the cost of our original model. The stacked model is probably not optimal for categorized splits. We also see that there is a high no information rate from the split model, so there is something behind the scenes going on with the models when stacking. It could be because our age split models did not perform well in general. 
 
 ### Stacked Model BMI Based Model
 ```{r}
@@ -640,8 +646,10 @@ stacked_bmi_dt_pred <- predict(stacked_bmi_dt, stackedbmitest)
 #Evaluate prediction results
 confusionMatrix(stacked_bmi_dt_pred, as.factor(stackedbmitest$Stroke))
 ```
+We see a similar result from the BMI stacked model. This is probably due to similar reasons outlined above from the age stacked model. 
 
 ## Improved Stacked Model
+Next, due to the somewhat light predictability of the stacked model, we wanted to see if we could improve it. 
 ```{r, warning=FALSE}
 set.seed(42)
 
@@ -657,7 +665,8 @@ grid <- expand.grid(.model = "tree",
 TunedStack <- train(as.factor(Stroke) ~ ., data = stackedmodel, method = "C5.0",
            metric = "Kappa",
            trControl = ctrl,
-           tuneGrid = grid)
+           tuneGrid = grid
+          )
 TunedStack
 
 #Preparing data for predict and confusion matrix
@@ -671,6 +680,7 @@ names(stackedtest_norm)[names(stackedtest_norm) == "knn1"] <- "knn"
 tunedstack_pred <- predict(TunedStack, stackedtest_norm)
 confusionMatrix(tunedstack_pred, as.factor(stackedtest_norm$Stroke))
 ```
+We see that even with improving the model, the same issue persists where the model is predicting all of one guess. The only difference this time, is that it is guess all "no-stroke". This change could be due to the fact that we do not have the error costs included in the creation of the model, therefore the model predicting all "no-stroke" due to the lack of "stroke" in the data set in general. We see that while even though the train() command gave us a model with an accuracy of .97+ and a kappa of .5+, when put against the test data, it predicts all "no stroke". It is difficult because there are only 47 instances of "stroke" in the test data
 
 ### Improved Stacked Model Age Based Model
 ```{r, warning=FALSE}
@@ -685,7 +695,7 @@ TunedStackAge
 tunedstackAGE_pred <- predict(TunedStackAge, stackedtest_norm)
 confusionMatrix(tunedstackAGE_pred, as.factor(stackedtest_norm$Stroke))
 ```
-
+We see that the improved age model has similar results to the general improved stacked model 
 
 ### Improved Stacked Model BMI Based Model
 ```{r, warning=FALSE}
@@ -700,5 +710,15 @@ TunedStackBMI
 tunedstackBMI_pred <- predict(TunedStackBMI, stackedtest_norm)
 confusionMatrix(tunedstackBMI_pred, as.factor(stackedtest_norm$Stroke))
 ```
+Again, we see a similar output. 
 
 ## Summary
+Overall, this project taught us a lot, but before we get into what it has taught us, let's talk about the insights we could extract from our analysis. In our intro, we talked about how the analysis we get from this project could be applied to predicting if a patient is going to have a stroke or not for both family physicians, hospitals, and insurance companies. We believe that while some of our models are accurate, it is best to use the models as a second opinion. The models are not accurate enough to full rely on them to make decisions. In a world with tons of information flowing and biases influencing decision making choices, a second opinion makes all the difference and can be the difference between life and death. This not only can give more confidence to the first initial prediction (when they match), but it can act as a warning to mismatched predictions, indicating that a deeper dive and more research might be needed in order to make a concrete prediction. Insurance companies and doctors can cross reference between the predictions of the KNN model and the predictions of the decision tree with the prediction of the doctor in order to thoroughly ensure that the right call is being made to the best of their abilities. The KNN model is solely accuracy based, making it a solid second opinion when it comes to deciding whether or not they will have a stroke or not, while the decision tree involves a cost matrix, acting as a solid second opinion consultant for whether to diagnose a patient with risk of stroke or not. 
+
+If we were to run the models again, it would be beneficial to run it on a much larger data set, given that the occurrence of "stroke" is low in general. We would need to increase the data set to the point that it includes many more "stroke" incidents. The KNN model would be the only model that we would feel comfortable using as a heavily weighted second opinion, and even then, it does not include error costs of false negatives, which is something that we want to include because the cost of a false negative is much more severe than the cost of a false positive. The other models are not completely useless though. For example the logistic model, decision tree, and ANN model give us an insight on which variables are more indicative of stroke compared to other variables, a very valuable insight. 
+
+In terms of an AI Canvas, we have a concrete idea of what we are predicting (stroke or not). In terms of judgment, we have an idea of the costs of false negative and false positives, however, more research and an expert opinion from doctors offices and/or hospital rooms would been need to accurately set a realistic error cost. We know that the action would be to diagnose stroke or not and follow-through on the specific procedures that go along with those diagnoses. The outcome would be to follow-up and see if the patient ultimately has a stroke or not. Input involves collect patients age, BMI, average glucose level, gender, etc. Training would involve train and test data being ran through the models above and feedback would involve feeding the outcomes and more collected data back into those models. 
+
+This project taught us a lot of real-life applications to machine learning and predictive analysis. The main lesson we learned was that data input matters. The biggest obstacle we had when running our analysis was the quality and quantity of data within our data set. Our data was very structured and clean. There weren't many missing entries within each observation, however, the number of observations was lacking. While having a smaller number of observations reduces run-time for the models, it causes the results from the models to be less effective in its predictions. For our project, this was the main issue that we had. While there were a good number of observations, it was not nearly enough. There were not enough positive stroke entries to effectivly train the models to accurately predict "stroke." Most of the observations in our data set were "no-stroke". This led to a heavily skewed data set that made it difficult to accurately predict "stroke" due simply to the lack of "strokes" in the data set. Another topic we learned was the importance of setting a cutoff for certain models to predict on. For example, with the logistic regression model and SVM model, it required a cutoff point to predict "stroke" or "no stroke" based on the output probability/log-odds ratio from the model. 
+
+In the end, our model does a really good job at providing more insight as well as a second opinion to predicting strokes. Hosiptals, doctors' practices, and insurance companies can benefit greatly not only from the insights provided by the desciptive models (that give us a more in-depth idea of the variables that significantly effect the probability of strokes) but also provide us with accurate predictions from the KNN model output cross-referenced with the decision tree output. 
